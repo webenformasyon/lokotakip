@@ -8,6 +8,10 @@ export default function Home() {
   const [editNotesText, setEditNotesText] = useState("");
   const [openKbPopup, setOpenKbPopup] = useState(null); // Hangi lokomotifin KB popup'ı açık
   const [openFaalPopup, setOpenFaalPopup] = useState(null); // Hangi lokomotifin Faal popup'ı açık
+  const [actionSheetLoco, setActionSheetLoco] = useState(null); // Action sheet için lokomotif
+  const [whatsappMessage, setWhatsappMessage] = useState(""); // WhatsApp mesajı
+  const [showWhatsappPreview, setShowWhatsappPreview] = useState(false); // WhatsApp önizleme
+  const [compactView, setCompactView] = useState(false); // Kompakt görünüm toggle
 
   async function loadLocos() {
     const { data, error } = await supabase
@@ -48,9 +52,13 @@ export default function Home() {
     }
   }
 
-  function statusText(status, kbType) {
+  function statusText(status, kbType, faalSubStatus) {
     switch (status) {
-      case "faal": return "Faal";
+      case "faal": 
+        if (faalSubStatus === 'bakimsiz') return "Faal (Bakımsız)";
+        if (faalSubStatus === 'bakiliyor') return "Faal (Bakılıyor)";
+        if (faalSubStatus === 'hazir') return "Faal (Hazır)";
+        return "Faal";
       case "cari_tamir": return "Cari Tamir";
       case "gayri_faal": return "Gayri Faal";
       case "bakimda": return kbType ? `Bakımda (${kbType.toUpperCase()})` : "Bakımda";
@@ -70,8 +78,8 @@ export default function Home() {
       updateData.kb_type = kbType || "kb1";
       updateData.faal_sub_status = null;
     } else if (newStatus === "faal") {
-      // Faal durumuna geçiyorsak ve faal_sub_status belirtilmemişse, devam_ediyor yap
-      updateData.faal_sub_status = faalSubStatus || "devam_ediyor";
+      // Faal durumuna geçiyorsak ve faal_sub_status belirtilmemişse, bakimsiz yap
+      updateData.faal_sub_status = faalSubStatus || "bakimsiz";
       updateData.kb_type = null;
     } else {
       // Diğer durumlarda her ikisini de null yap
@@ -139,6 +147,8 @@ export default function Home() {
   function closeNotesPopup() {
     setEditingLoco(null);
     setEditNotesText("");
+    setOpenKbPopup(null);
+    setOpenFaalPopup(null);
   }
 
   function getTurkishDate() {
@@ -154,35 +164,67 @@ export default function Home() {
     return `${dayName}, ${day} ${month} ${year}`;
   }
 
+  function getStatusStats() {
+    const stats = {
+      faal: 0,
+      gayri_faal: 0,
+      bakimda: 0,
+      cari_tamir: 0
+    };
 
-  async function shareOnWhatsApp() {
+    locos.forEach(loco => {
+      if (stats.hasOwnProperty(loco.status)) {
+        stats[loco.status]++;
+      }
+    });
+
+    return `F:${stats.faal} GF:${stats.gayri_faal} KB:${stats.bakimda} CT:${stats.cari_tamir}`;
+  }
+
+
+  function generateWhatsAppMessage() {
     let message = `🚂 *Lokomotif Durumu*\n`;
     message += `📅 ${getTurkishDate()}\n`;
     message += `━━━━━━━━━━━━━━━\n\n`;
 
     for (const loco of locos) {
       message += `🔹 *${loco.name}*\n`;
-      message += `   Durum: ${statusText(loco.status, loco.kb_type)}\n`;
+      message += `   Durum: ${statusText(loco.status, loco.kb_type, loco.faal_sub_status)}\n`;
       
       if (loco.notes && loco.notes.trim()) {
         message += `   Not: ${loco.notes}\n`;
-      } else {
-        message += `   Not kaydı yok\n`;
       }
       message += `\n`;
     }
+    return message;
+  }
 
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+  function openWhatsAppPreview() {
+    const message = generateWhatsAppMessage();
+    setWhatsappMessage(message);
+    setShowWhatsappPreview(true);
+  }
+
+  function shareOnWhatsApp() {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(whatsappUrl, '_blank');
+    setShowWhatsappPreview(false);
+    setWhatsappMessage("");
   }
 
   return (
-    <div style={{ 
-      padding: "15px",
-      maxWidth: "100%",
-      margin: "0 auto",
-      paddingBottom: "100px"
-    }}>
+    <div 
+      style={{ 
+        padding: "15px",
+        maxWidth: "100%",
+        margin: "0 auto",
+        paddingBottom: "100px"
+      }}
+      onClick={() => {
+        setOpenKbPopup(null);
+        setOpenFaalPopup(null);
+      }}
+    >
       {/* Tarih Başlığı */}
       <div style={{
         backgroundColor: "#FF6B35",
@@ -198,29 +240,99 @@ export default function Home() {
         📅 {getTurkishDate()}
       </div>
 
-      <h2 style={{ 
-        fontSize: "1.35rem",
-        marginBottom: "1.5rem",
-        textAlign: "center",
-        fontWeight: "bold"
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "1.5rem"
       }}>
-        Lokomotifler
-      </h2>
+        <h2 style={{ 
+          fontSize: "1.35rem",
+          fontWeight: "bold",
+          margin: 0,
+          flex: 1,
+          textAlign: "center"
+        }}>
+          {locos.length} Lokomotif <span style={{ fontSize: "0.9rem", fontWeight: "normal", color: "#666" }}>({getStatusStats()})</span>
+        </h2>
+        <button
+          onClick={() => setCompactView(!compactView)}
+          style={{
+            padding: "8px 16px",
+            fontSize: "0.85rem",
+            fontWeight: "bold",
+            backgroundColor: compactView ? "#4CAF50" : "#666",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            marginLeft: "10px"
+          }}
+        >
+          {compactView ? "📋 Liste" : "🔢 Kompakt"}
+        </button>
+      </div>
 
-      {locos.map((loco) => {
-        return (
-          <div
-            key={loco.id}
-            style={{
-              border: "2px solid #ccc",
-              borderLeft: `8px solid ${statusColor(loco.status)}`,
-              borderRadius: "8px",
-              marginBottom: "15px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-              overflow: "visible",
-              position: "relative"
-            }}
-          >
+      {compactView ? (
+        // Kompakt Görünüm - Sadece Lokomotif Numaraları
+        <div style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px",
+          justifyContent: "center"
+        }}>
+          {locos.map((loco) => {
+            const statusColorMap = {
+              faal: "#4CAF50",
+              cari_tamir: "#FF9800",
+              bakimda: "#2196F3",
+              gayri_faal: "#f44336"
+            };
+            return (
+              <div
+                key={loco.id}
+                style={{
+                  padding: "12px 20px",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  backgroundColor: statusColorMap[loco.status] || "#666",
+                  color: "white",
+                  borderRadius: "8px",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.05)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+                }}
+              >
+                {loco.name}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        // Normal Liste Görünümü
+        locos.map((loco) => {
+          return (
+            <div
+              key={loco.id}
+              style={{
+                border: "2px solid #ccc",
+                borderLeft: `8px solid ${statusColor(loco.status)}`,
+                borderRadius: "8px",
+                marginBottom: "15px",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                overflow: "visible",
+                position: "relative"
+              }}
+            >
             {/* Lokomotif Bilgisi */}
             <div 
               style={{
@@ -238,7 +350,7 @@ export default function Home() {
                 gap: "10px"
               }}>
                 <div style={{ 
-                  fontSize: "0.8rem",
+                  fontSize: "1.1rem",
                   fontWeight: "bold",
                   color: "#000",
                   flex: 1
@@ -249,9 +361,7 @@ export default function Home() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`${loco.name} lokomotifini depodan gitmiş olarak işaretlemek istediğinize emin misiniz?`)) {
-                      markAsGone(loco.id);
-                    }
+                    setActionSheetLoco({ ...loco, action: 'gone' });
                   }}
                   style={{
                     padding: "8px 12px",
@@ -270,9 +380,7 @@ export default function Home() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`${loco.name} lokomotifini kaldırmak istediğinize emin misiniz?`)) {
-                      deleteLoco(loco.id);
-                    }
+                    setActionSheetLoco({ ...loco, action: 'delete' });
                   }}
                   style={{
                     padding: "8px 12px",
@@ -304,7 +412,7 @@ export default function Home() {
                         setOpenFaalPopup(openFaalPopup === loco.id ? null : loco.id);
                       } else {
                         // Faal değilse faal yap ve popup aç
-                        changeStatus(loco.id, "faal", null, "devam_ediyor");
+                        changeStatus(loco.id, "faal", null, "bakimsiz");
                         setOpenFaalPopup(loco.id);
                       }
                     }}
@@ -330,76 +438,15 @@ export default function Home() {
                         right: "4px",
                         fontSize: "0.6rem",
                         fontWeight: "600",
-                        color: "#2E7D32"
+                        color: loco.faal_sub_status === "bakimsiz" ? "#E65100" : 
+                               loco.faal_sub_status === "bakiliyor" ? "#F57C00" : 
+                               "#2E7D32"
                       }}>
-                        ({loco.faal_sub_status === "devam_ediyor" ? "Devam Ediyor" : "Hazır"})
+                        ({loco.faal_sub_status === "bakimsiz" ? "Bakımsız" : loco.faal_sub_status === "bakiliyor" ? "Bakılıyor" : "Hazır"})
                       </span>
                     )}
                   </button>
                   
-                  {/* Faal Popup */}
-                  {openFaalPopup === loco.id && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: 0,
-                        right: 0,
-                        marginTop: "5px",
-                        backgroundColor: "white",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                        border: "2px solid #4CAF50",
-                        zIndex: 1000,
-                        padding: "8px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "5px"
-                      }}
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          changeStatus(loco.id, "faal", null, "devam_ediyor");
-                          setOpenFaalPopup(null);
-                        }}
-                        style={{
-                          padding: "10px",
-                          fontSize: "0.7rem",
-                          fontWeight: "bold",
-                          border: loco.faal_sub_status === "devam_ediyor" ? "3px solid #2E7D32" : "2px solid #81C784",
-                          borderRadius: "6px",
-                          backgroundColor: loco.faal_sub_status === "devam_ediyor" ? "#C8E6C9" : "#E8F5E9",
-                          color: loco.faal_sub_status === "devam_ediyor" ? "#1B5E20" : "#2E7D32",
-                          cursor: "pointer",
-                          transition: "all 0.2s"
-                        }}
-                      >
-                        Devam Ediyor
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          changeStatus(loco.id, "faal", null, "hazir");
-                          setOpenFaalPopup(null);
-                        }}
-                        style={{
-                          padding: "10px",
-                          fontSize: "0.7rem",
-                          fontWeight: "bold",
-                          border: loco.faal_sub_status === "hazir" ? "3px solid #2E7D32" : "2px solid #81C784",
-                          borderRadius: "6px",
-                          backgroundColor: loco.faal_sub_status === "hazir" ? "#C8E6C9" : "#E8F5E9",
-                          color: loco.faal_sub_status === "hazir" ? "#1B5E20" : "#2E7D32",
-                          cursor: "pointer",
-                          transition: "all 0.2s"
-                        }}
-                      >
-                        Hazır
-                      </button>
-                    </div>
-                  )}
                 </div>
                 <button
                   onClick={(e) => {
@@ -463,89 +510,6 @@ export default function Home() {
                     )}
                   </button>
                   
-                  {/* KB Popup */}
-                  {openKbPopup === loco.id && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: 0,
-                        right: 0,
-                        marginTop: "5px",
-                        backgroundColor: "white",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                        border: "2px solid #2196F3",
-                        zIndex: 1000,
-                        padding: "8px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "5px"
-                      }}
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          changeStatus(loco.id, "bakimda", "kb1");
-                          setOpenKbPopup(null);
-                        }}
-                        style={{
-                          padding: "10px",
-                          fontSize: "0.7rem",
-                          fontWeight: "bold",
-                          border: loco.kb_type === "kb1" ? "3px solid #1976d2" : "2px solid #90caf9",
-                          borderRadius: "6px",
-                          backgroundColor: loco.kb_type === "kb1" ? "#bbdefb" : "#e3f2fd",
-                          color: loco.kb_type === "kb1" ? "#0d47a1" : "#1976d2",
-                          cursor: "pointer",
-                          transition: "all 0.2s"
-                        }}
-                      >
-                        KB1
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          changeStatus(loco.id, "bakimda", "kb2");
-                          setOpenKbPopup(null);
-                        }}
-                        style={{
-                          padding: "10px",
-                          fontSize: "0.7rem",
-                          fontWeight: "bold",
-                          border: loco.kb_type === "kb2" ? "3px solid #1976d2" : "2px solid #90caf9",
-                          borderRadius: "6px",
-                          backgroundColor: loco.kb_type === "kb2" ? "#bbdefb" : "#e3f2fd",
-                          color: loco.kb_type === "kb2" ? "#0d47a1" : "#1976d2",
-                          cursor: "pointer",
-                          transition: "all 0.2s"
-                        }}
-                      >
-                        KB2
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          changeStatus(loco.id, "bakimda", "kb3");
-                          setOpenKbPopup(null);
-                        }}
-                        style={{
-                          padding: "10px",
-                          fontSize: "0.7rem",
-                          fontWeight: "bold",
-                          border: loco.kb_type === "kb3" ? "3px solid #1976d2" : "2px solid #90caf9",
-                          borderRadius: "6px",
-                          backgroundColor: loco.kb_type === "kb3" ? "#bbdefb" : "#e3f2fd",
-                          color: loco.kb_type === "kb3" ? "#0d47a1" : "#1976d2",
-                          cursor: "pointer",
-                          transition: "all 0.2s"
-                        }}
-                      >
-                        KB3
-                      </button>
-                    </div>
-                  )}
                 </div>
                 <button
                   onClick={(e) => {
@@ -623,7 +587,8 @@ export default function Home() {
             )}
           </div>
         );
-      })}
+        })
+      )}
 
       {/* Notlar Düzenleme Popup */}
       {editingLoco && (
@@ -812,7 +777,7 @@ export default function Home() {
 
       {/* WhatsApp Paylaş Butonu */}
       <button
-        onClick={shareOnWhatsApp}
+        onClick={openWhatsAppPreview}
         style={{
           width: "100%",
           padding: "18px",
@@ -835,6 +800,400 @@ export default function Home() {
         <span style={{ fontSize: "1.2rem" }}>📱</span>
         WhatsApp'ta Paylaş
       </button>
+
+      {/* KB Modal Popup */}
+      {openKbPopup && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setOpenKbPopup(null);
+            }
+          }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3000,
+            padding: "20px"
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              padding: "30px",
+              maxWidth: "400px",
+              width: "100%",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+            }}
+          >
+            <h3 style={{
+              marginTop: 0,
+              marginBottom: "20px",
+              fontSize: "1.2rem",
+              fontWeight: "bold",
+              textAlign: "center",
+              color: "#1976d2"
+            }}>
+              Bakım Tipi Seçin
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {["kb1", "kb2", "kb3"].map((kb) => {
+                const loco = locos.find(l => l.id === openKbPopup);
+                return (
+                  <button
+                    key={kb}
+                    onClick={() => {
+                      changeStatus(openKbPopup, "bakimda", kb);
+                      setOpenKbPopup(null);
+                    }}
+                    style={{
+                      padding: "18px",
+                      fontSize: "1.1rem",
+                      fontWeight: "bold",
+                      border: loco?.kb_type === kb ? "3px solid #1976d2" : "2px solid #90caf9",
+                      borderRadius: "12px",
+                      backgroundColor: loco?.kb_type === kb ? "#bbdefb" : "#e3f2fd",
+                      color: loco?.kb_type === kb ? "#0d47a1" : "#1976d2",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    {kb.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setOpenKbPopup(null)}
+              style={{
+                marginTop: "20px",
+                width: "100%",
+                padding: "12px",
+                fontSize: "0.9rem",
+                fontWeight: "bold",
+                backgroundColor: "#999",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer"
+              }}
+            >
+              İptal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Faal Modal Popup */}
+      {openFaalPopup && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setOpenFaalPopup(null);
+            }
+          }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3000,
+            padding: "20px"
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              padding: "30px",
+              maxWidth: "400px",
+              width: "100%",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+            }}
+          >
+            <h3 style={{
+              marginTop: 0,
+              marginBottom: "20px",
+              fontSize: "1.2rem",
+              fontWeight: "bold",
+              textAlign: "center",
+              color: "#2E7D32"
+            }}>
+              Faal Durumu Seçin
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {[
+                { value: "bakimsiz", label: "Bakımsız", color: "#FF9800", lightColor: "#FFE0B2", darkColor: "#E65100" },
+                { value: "bakiliyor", label: "Bakılıyor", color: "#FFC107", lightColor: "#FFF9C4", darkColor: "#F57C00" },
+                { value: "hazir", label: "Hazır", color: "#4CAF50", lightColor: "#C8E6C9", darkColor: "#2E7D32" }
+              ].map((option) => {
+                const loco = locos.find(l => l.id === openFaalPopup);
+                const isSelected = loco?.faal_sub_status === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      changeStatus(openFaalPopup, "faal", null, option.value);
+                      setOpenFaalPopup(null);
+                    }}
+                    style={{
+                      padding: "18px",
+                      fontSize: "1.1rem",
+                      fontWeight: "bold",
+                      border: isSelected ? `3px solid ${option.darkColor}` : `2px solid ${option.color}`,
+                      borderRadius: "12px",
+                      backgroundColor: isSelected ? option.lightColor : "#fff",
+                      color: isSelected ? option.darkColor : option.color,
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setOpenFaalPopup(null)}
+              style={{
+                marginTop: "20px",
+                width: "100%",
+                padding: "12px",
+                fontSize: "0.9rem",
+                fontWeight: "bold",
+                backgroundColor: "#999",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer"
+              }}
+            >
+              İptal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Action Sheet Popup - Onay */}
+      {actionSheetLoco && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setActionSheetLoco(null);
+            }
+          }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            zIndex: 3000
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderTopLeftRadius: "20px",
+              borderTopRightRadius: "20px",
+              width: "100%",
+              maxWidth: "500px",
+              padding: "20px",
+              boxShadow: "0 -4px 20px rgba(0,0,0,0.3)"
+            }}
+          >
+            <div style={{
+              width: "40px",
+              height: "4px",
+              backgroundColor: "#ccc",
+              borderRadius: "2px",
+              margin: "0 auto 20px"
+            }} />
+            <h3 style={{
+              marginTop: 0,
+              marginBottom: "10px",
+              fontSize: "1.1rem",
+              fontWeight: "bold",
+              textAlign: "center"
+            }}>
+              {actionSheetLoco.action === 'gone' ? 'Depodan Gitmiş' : 'Sil'}
+            </h3>
+            <p style={{
+              marginTop: 0,
+              marginBottom: "20px",
+              fontSize: "0.9rem",
+              textAlign: "center",
+              color: "#666"
+            }}>
+              {actionSheetLoco.action === 'gone' 
+                ? `${actionSheetLoco.name} lokomotifini depodan gitmiş olarak işaretlemek istediğinize emin misiniz?`
+                : `${actionSheetLoco.name} lokomotifini kaldırmak istediğinize emin misiniz?`}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <button
+                onClick={() => {
+                  if (actionSheetLoco.action === 'gone') {
+                    markAsGone(actionSheetLoco.id);
+                  } else if (actionSheetLoco.action === 'delete') {
+                    deleteLoco(actionSheetLoco.id);
+                  }
+                  setActionSheetLoco(null);
+                }}
+                style={{
+                  padding: "18px",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  backgroundColor: actionSheetLoco.action === 'gone' ? "#FF9800" : "#f44336",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  cursor: "pointer"
+                }}
+              >
+                {actionSheetLoco.action === 'gone' ? '📦 Evet, Depodan Gitmiş' : '🗑️ Evet, Sil'}
+              </button>
+              <button
+                onClick={() => setActionSheetLoco(null)}
+                style={{
+                  padding: "18px",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  backgroundColor: "#f5f5f5",
+                  color: "#333",
+                  border: "none",
+                  borderRadius: "12px",
+                  cursor: "pointer"
+                }}
+              >
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp Preview Modal */}
+      {showWhatsappPreview && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowWhatsappPreview(false);
+            }
+          }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3000,
+            padding: "20px"
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              padding: "25px",
+              maxWidth: "600px",
+              width: "100%",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+              maxHeight: "80vh",
+              display: "flex",
+              flexDirection: "column"
+            }}
+          >
+            <h3 style={{
+              marginTop: 0,
+              marginBottom: "20px",
+              fontSize: "1.2rem",
+              fontWeight: "bold",
+              textAlign: "center",
+              color: "#25D366"
+            }}>
+              WhatsApp Mesajı Önizleme
+            </h3>
+            <textarea
+              value={whatsappMessage}
+              onChange={(e) => setWhatsappMessage(e.target.value)}
+              rows={12}
+              style={{
+                width: "100%",
+                padding: "15px",
+                fontSize: "0.9rem",
+                border: "2px solid #ccc",
+                borderRadius: "8px",
+                boxSizing: "border-box",
+                marginBottom: "20px",
+                resize: "vertical",
+                lineHeight: "1.5",
+                fontFamily: "monospace"
+              }}
+            />
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => {
+                  setShowWhatsappPreview(false);
+                  setWhatsappMessage("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "15px",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  backgroundColor: "#999",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer"
+                }}
+              >
+                İptal
+              </button>
+              <button
+                onClick={shareOnWhatsApp}
+                style={{
+                  flex: 1,
+                  padding: "15px",
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  backgroundColor: "#25D366",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer"
+                }}
+              >
+                📱 Devam Et
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

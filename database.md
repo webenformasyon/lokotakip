@@ -11,7 +11,7 @@ create table locomotives (
   name text not null,
   status text not null check (status in ('faal', 'cari_tamir', 'bakimda', 'gayri_faal')),
   kb_type text check (kb_type in ('kb1', 'kb2', 'kb3')),
-  faal_sub_status text check (faal_sub_status in ('devam_ediyor', 'hazir')),
+  faal_sub_status text check (faal_sub_status in ('bakimsiz', 'bakiliyor', 'hazir')),
   notes text default '',
   is_active boolean not null default true,
   gone boolean not null default false,

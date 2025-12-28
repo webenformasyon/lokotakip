@@ -6,7 +6,7 @@ export default function AddLoco({ onBack }) {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("faal");
   const [kbType, setKbType] = useState("kb1");
-  const [faalSubStatus, setFaalSubStatus] = useState("devam_ediyor");
+  const [faalSubStatus, setFaalSubStatus] = useState("bakimsiz");
 
   async function save() {
     const data = { 
@@ -102,7 +102,8 @@ export default function AddLoco({ onBack }) {
             fontWeight: "600"
           }}
         >
-          <option value="devam_ediyor">Devam Ediyor</option>
+          <option value="bakimsiz">Bakımsız</option>
+          <option value="bakiliyor">Bakılıyor</option>
           <option value="hazir">Hazır</option>
         </select>
       )}

@@ -2,6 +2,60 @@
 
 ## 28 Aralık 2025
 
+### Faal Alt Durumları Güncellendi
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:** `src/Home.jsx`, `src/AddLoco.jsx`, `database.md`
+
+**Değişiklikler:**
+- "Devam Ediyor" ve "Hazır" yerine 3 yeni durum eklendi:
+  - **Bakımsız** (varsayılan)
+  - **Bakılıyor**
+  - **Hazır**
+- Text çakışma sorunu çözüldü
+- Database constraint güncellendi: `('bakimsiz', 'bakiliyor', 'hazir')`
+- Tüm referanslar güncellendi (Home.jsx, AddLoco.jsx, database.md)
+
+**Fonksiyonellik:**
+- Yeni lokomotif eklerken varsayılan durum: "Bakımsız"
+- Faal durumuna geçerken varsayılan: "Bakımsız"
+- Modal popup'ta 3 seçenek gösteriliyor
+- WhatsApp paylaşımında doğru durumlar gösteriliyor
+
+---
+
+### UI/UX İyileştirmeleri - Modal Popup'lar ve WhatsApp Önizleme
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+
+1. **WhatsApp Paylaşım İyileştirmesi:**
+   - Açıklama yoksa "Not kaydı yok" yazılmıyor
+   - Paylaş butonuna basınca önce textarea'da mesaj gösteriliyor
+   - Mesaj düzenlenebilir
+   - "Devam Et" butonuna basınca WhatsApp'a yönlendiriliyor
+
+2. **KB ve Faal Popup'ları Modal Yapıldı:**
+   - KB1, KB2, KB3 seçenekleri tam ekran modal popup olarak açılıyor
+   - Faal alt durumları (Devam Ediyor, Hazır) tam ekran modal popup olarak açılıyor
+   - Daha büyük butonlar ve daha iyi görünüm
+
+3. **Lokomotif Numarası Büyütüldü:**
+   - Lokomotif numarası font boyutu 0.8rem'den 1.1rem'e çıkarıldı
+   - Daha okunabilir hale geldi
+
+4. **Action Sheet Popup:**
+   - Sil ve Depodan Gitmiş butonları tek bir "⋯" butonuna birleştirildi
+   - Butona basınca action sheet tarzı popup açılıyor (alttan yukarı)
+   - Daha modern ve kullanıcı dostu arayüz
+
+**Tasarım:**
+- Modal popup'lar: Tam ekran overlay, merkezi konumlandırma
+- Action sheet: Alttan yukarı animasyon, yuvarlatılmış köşeler
+- WhatsApp preview: Düzenlenebilir textarea, "Devam Et" butonu
+
+---
+
 ### Depodan Gitmiş Özelliği
 - **Tarih:** 28 Aralık 2025
 - **Güncellenen Dosyalar:** `src/Home.jsx`, `database.md`
