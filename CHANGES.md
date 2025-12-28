@@ -2,6 +2,36 @@
 
 ## 28 Aralık 2025
 
+### Depodan Gitmiş Özelliği
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:** `src/Home.jsx`, `database.md`
+
+**Özellik:**
+- "Depodan Gitmiş" butonu eklendi (Sil butonunun soluna)
+- Lokomotifler depodan gitmiş olarak işaretlenebilir
+- `gone` column eklendi (boolean, default: false)
+- `gone = true` olan lokomotifler listeden kaldırılır (ama DB'de korunur)
+
+**Fonksiyonellik:**
+- Butona tıklandığında onay mesajı gösterilir
+- Onaylandığında `gone = true` olarak güncellenir
+- Lokomotif listeden kaybolur ama veritabanında durumu korunur
+- `loadLocos` fonksiyonu sadece `gone = false` olanları gösterir
+
+**Tasarım:**
+- Buton: Turuncu arka plan (#FF9800), beyaz yazı
+- Sil butonunun solunda konumlandırıldı
+- İkon: 📦 Depodan Gitmiş
+
+**Veritabanı:**
+```sql
+gone boolean not null default false
+```
+
+---
+
+## 28 Aralık 2025
+
 ### Paket Yüklemeleri
 - **Eklenen Dosya:** `package.json`
 - **Değişiklik:** `@supabase/supabase-js` paketi projeye eklendi
@@ -172,6 +202,208 @@
 - Border kalınlıkları artırıldı (3px)
 - Padding değerleri büyütüldü (18-20px)
 - Emoji'ler kullanıcı deneyimini iyileştirdi
+
+### Yeni Lokomotif Ekleme - Faal Durumu Düzeltildi
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/AddLoco.jsx`
+
+**Sorun:**
+- Yeni lokomotif eklerken faal durumunda ekleme yapmıyordu
+- `faal_sub_status` eksikti
+
+**Çözüm:**
+- `faalSubStatus` state eklendi (varsayılan: "devam_ediyor")
+- Faal durumu seçildiğinde dropdown gösteriliyor (Devam Ediyor / Hazır)
+- Save işleminde `faal_sub_status` kaydediliyor
+
+**Tasarım:**
+- Faal dropdown: Yeşil border, açık yeşil arka plan
+- Bakımda dropdown: Mavi border, açık mavi arka plan
+- Her ikisi de aynı stil ve boyutta
+
+---
+
+### Faal Durumuna Popup Eklendi - Devam Ediyor/Hazır
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:** `src/Home.jsx`, `database.md`
+
+**Yeni Özellik:**
+- "Faal" durumuna da "Bakımda" gibi popup eklendi
+- Popup'ta 2 seçenek: "Devam Ediyor" ve "Hazır"
+- Seçilen durum "Faal" butonunun sağ altına yazılıyor: "Faal (Devam Ediyor)" veya "Faal (Hazır)"
+- Ana sayfadaki "Hazır" butonu kaldırıldı
+
+**Veritabanı:**
+- `faal_sub_status` kolonu eklendi: 'devam_ediyor' | 'hazir'
+- Trigger güncellendi: Faal değilse faal_sub_status null olur
+
+**⚠️ Veritabanı Migration Gerekli:**
+
+Supabase SQL Editor'da:
+
+```sql
+-- faal_sub_status kolonunu ekle
+ALTER TABLE locomotives ADD COLUMN IF NOT EXISTS faal_sub_status text;
+
+-- Constraint ekle
+ALTER TABLE locomotives DROP CONSTRAINT IF EXISTS locomotives_faal_sub_status_check;
+ALTER TABLE locomotives ADD CONSTRAINT locomotives_faal_sub_status_check 
+  CHECK (faal_sub_status IN ('devam_ediyor', 'hazir') OR faal_sub_status IS NULL);
+
+-- Trigger'ı güncelle (check_status_constraints fonksiyonu database.md'de)
+DROP TRIGGER IF EXISTS enforce_status_constraints ON locomotives;
+CREATE TRIGGER enforce_status_constraints
+BEFORE INSERT OR UPDATE ON locomotives
+FOR EACH ROW
+EXECUTE PROCEDURE check_status_constraints();
+```
+
+**Davranış:**
+1. "Faal" butonuna tıkla → Popup açılır (Devam Ediyor, Hazır)
+2. Bir seçenek seç → Popup kapanır, seçilen durum butonun sağ altına yazılır
+3. Zaten faal ise → "Faal" butonuna tıklayınca popup açılır/kapanır
+
+**Tasarım:**
+- Popup: Butonun hemen altında, beyaz arka plan, yeşil border
+- Butonlar: Dikey sıralı, seçili olan vurgulu (koyu yeşil)
+- Durum gösterimi: Butonun sağ alt köşesinde küçük text "(Devam Ediyor)" veya "(Hazır)"
+- z-index: 1000
+
+---
+
+### KB Seçimi Popup/Dropdown Olarak Değiştirildi
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Büyük Değişiklik:**
+- KB1, KB2, KB3 butonları artık direkt görünmüyor
+- "Bakımda" butonuna tıklandığında popup/dropdown açılıyor
+- Seçilen KB, "Bakımda" butonunun sağ altına yazılıyor: "Bakımda (KB1)"
+
+**Davranış:**
+1. "Bakımda" butonuna tıkla → Popup açılır (KB1, KB2, KB3)
+2. Bir KB seç → Popup kapanır, seçilen KB butonun sağ altına yazılır
+3. Zaten bakımda ise → "Bakımda" butonuna tıklayınca popup açılır/kapanır
+
+**Tasarım:**
+- Popup: Butonun hemen altında, beyaz arka plan, mavi border
+- KB butonları: Dikey sıralı, seçili olan vurgulu
+- KB gösterimi: Butonun sağ alt köşesinde küçük text "(KB1)"
+- z-index: 1000 (diğer elementlerin üstünde)
+- Overflow: Parent container'da overflow: visible (KB3'ün görünmesi için)
+
+**Avantajlar:**
+- ✅ Daha temiz görünüm (KB butonları her zaman görünmüyor)
+- ✅ Daha az yer kaplıyor
+- ✅ Modern dropdown/popup tasarımı
+- ✅ Seçilen KB görünüyor
+
+---
+
+### Özel Durum Butonları Popup'a Taşındı
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklik:**
+- "Hazır" butonu ana sayfada kaldı
+- "Soğuk Sevk", "KB Yaklaşıyor", "Malzeme Bekler" butonları popup'a taşındı
+- Bu butonlar textarea'nın altında, Kaydet butonunun üstünde
+- Butonlara tıklandığında textarea'ya otomatik metin ekleniyor
+
+**Davranış:**
+- Textarea boşsa → Sadece buton metni eklenir: "Soğuk Sevk"
+- Textarea doluysa → Mevcut metne eklenir: "Mevcut metin Soğuk Sevk"
+- Her buton tıklamasında metin sonuna eklenir
+
+**Tasarım:**
+- Popup içinde textarea'nın altında
+- 3 buton yan yana (flex, wrap)
+- Aynı renkler ve stil (mavi, turuncu, mor)
+- Küçük boyut (0.7rem, padding: 6px 12px)
+
+---
+
+### Özel Durum Butonları (Dikdörtgen, Resimsiz)
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Yeni Özellik:**
+Lokomotif numarasının sağına 4 özel durum butonu eklendi (dikdörtgen, sadece text):
+
+1. **Hazır** - Yeşil dikdörtgen buton (#4CAF50)
+   - Lokomotif hazır durumda
+
+2. **Soğuk Sevk** - Mavi dikdörtgen buton (#2196F3)
+   - Soğuk sevk durumu
+
+3. **KB Yaklaşıyor** - Turuncu dikdörtgen buton (#FF9800)
+   - Bakım yaklaşıyor uyarısı
+
+4. **Malzeme Bekler** - Mor dikdörtgen buton (#9C27B0)
+   - Malzeme bekleniyor
+
+**Tasarım:**
+- Dikdörtgen butonlar (padding: 4px 10px)
+- Sadece text, resim/ikon yok
+- Text: 0.65rem, beyaz, font-weight: 600
+- Renkli arka plan + koyu border (1px)
+- border-radius: 4px (yuvarlatılmış köşeler)
+- Gölge efekti (box-shadow)
+- whiteSpace: nowrap (text kırılmaz)
+- Hover efekti için cursor: pointer
+- Tooltip (title) ile açıklama
+- flexWrap: wrap ile responsive
+
+**Konum:**
+- Lokomotif numarası ile Sil butonu arasında
+- Yatay sıralı, 6px gap ile
+- Her buton: sadece text içeriyor
+
+**Not:** Şu an sadece görsel olarak eklendi, tıklama fonksiyonları henüz eklenmedi.
+
+---
+
+### Otomatik Tarih Ekleme Özelliği Kaldırıldı
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklik:**
+- Notlara otomatik tarih ekleme özelliği tamamen kaldırıldı
+- Artık sadece kullanıcının yazdığı metin kaydediliyor
+- `formatLogDate()` fonksiyonu kaldırıldı (artık kullanılmıyor)
+
+**Davranış:**
+- Kullanıcı "Yağ değişimi" yazarsa → Sadece "Yağ değişimi" kaydedilir
+- Tarih eklenmez, kullanıcı isterse manuel yazabilir
+- Boş bırakılırsa → Boş string kaydedilir
+
+---
+
+### Font Boyutları 3'te 1 Azaltıldı
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklik:**
+Tüm yazı boyutları %33 azaltıldı (3'te 1)
+
+**Önceki → Yeni:**
+- Başlık: 2rem → 1.35rem
+- Loko adı: 1.8rem → 1.2rem
+- Tarih banner: 1.1rem → 0.75rem
+- Durum butonları: 1.1rem → 0.75rem
+- KB butonları: 1rem → 0.7rem
+- Not içeriği: 1.2rem → 0.8rem
+- Popup başlık: 1.5rem → 1.0rem
+- Popup butonlar: 1.3rem → 0.9rem
+- Sil butonu: 1.1rem → 0.75rem
+
+**Sonuç:**
+- ✅ Daha kompakt görünüm
+- ✅ Daha fazla içerik sığıyor
+- ✅ Mobilde daha iyi okunuyor
+- ✅ Modern ve profesyonel görünüm
+
+---
 
 ### Veritabanı Yapısı Basitleştirildi - Notlar Tek Column
 - **Tarih:** 28 Aralık 2025

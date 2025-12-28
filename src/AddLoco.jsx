@@ -6,12 +6,14 @@ export default function AddLoco({ onBack }) {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("faal");
   const [kbType, setKbType] = useState("kb1");
+  const [faalSubStatus, setFaalSubStatus] = useState("devam_ediyor");
 
   async function save() {
     const data = { 
       name, 
       status,
-      kb_type: status === "bakimda" ? kbType : null
+      kb_type: status === "bakimda" ? kbType : null,
+      faal_sub_status: status === "faal" ? faalSubStatus : null
     };
     await supabase.from("locomotives").insert(data);
     onBack();
@@ -66,7 +68,7 @@ export default function AddLoco({ onBack }) {
         style={{ 
           width: "100%", 
           padding: "18px 20px", 
-          marginBottom: status === "bakimda" ? "15px" : "25px",
+          marginBottom: (status === "bakimda" || status === "faal") ? "15px" : "25px",
           fontSize: "1.4rem",
           border: "3px solid #ccc",
           borderRadius: "10px",
@@ -81,6 +83,29 @@ export default function AddLoco({ onBack }) {
         <option value="bakimda">🔵 Bakımda</option>
         <option value="gayri_faal">🔴 Gayri Faal</option>
       </select>
+
+      {/* Faal Alt Seçeneği - Sadece Faal durumunda göster */}
+      {status === "faal" && (
+        <select
+          value={faalSubStatus}
+          onChange={(e) => setFaalSubStatus(e.target.value)}
+          style={{ 
+            width: "100%", 
+            padding: "18px 20px", 
+            marginBottom: "25px",
+            fontSize: "1.4rem",
+            border: "3px solid #4CAF50",
+            borderRadius: "10px",
+            boxSizing: "border-box",
+            backgroundColor: "#E8F5E9",
+            color: "#2E7D32",
+            fontWeight: "600"
+          }}
+        >
+          <option value="devam_ediyor">Devam Ediyor</option>
+          <option value="hazir">Hazır</option>
+        </select>
+      )}
 
       {/* KB Seçeneği - Sadece Bakımda durumunda göster */}
       {status === "bakimda" && (
