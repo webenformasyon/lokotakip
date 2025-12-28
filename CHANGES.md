@@ -16,3 +16,20 @@
 - **Not:** Node.js versiyon uyarısı mevcut (20.11.1 kullanılıyor, 20.19+ öneriliyor)
 - **Çözülen Sorun:** node_modules eksikliği giderildi (`npm install` ile)
 
+### İkonlar ve PWA Varlıkları
+- **Eklenen Klasör:** `public/icons/`
+- **Oluşturulan Dosyalar:**
+  - `public/icons/icon.svg` (1.2 KB) - Kaynak lokomotif ikonu
+  - `public/icons/icon-192.png` (9.7 KB) - 192x192 PWA ikonu
+  - `public/icons/icon-512.png` (17 KB) - 512x512 PWA ikonu
+- **Tasarım:** Turuncu arka plan üzerine siyah lokomotif, duman efekti ile
+
+### Git Yapılandırması
+- **Oluşturulan Dosya:** `.gitignore`
+- **Git'ten Çıkarılan Dosyalar:**
+  - `node_modules/` klasörü (4862 dosya, ~1.2M satır kod)
+  - `dist/` klasörü (build çıktıları, 4 dosya)
+  - `.DS_Store` (macOS sistem dosyası)
+- **Toplam:** 4867 dosya git takibinden çıkarıldı
+- **Sonuç:** Repository boyutu önemli ölçüde küçültüldü
+
