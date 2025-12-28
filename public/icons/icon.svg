@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Arka plan -->
+  <rect width="512" height="512" fill="#FF6B35" rx="64"/>
+  
+  <!-- Lokomotif gövdesi -->
+  <rect x="85" y="256" width="342" height="128" fill="#2C3E50" stroke="#1A252F" stroke-width="4"/>
+  
+  <!-- Baca -->
+  <rect x="171" y="171" width="64" height="85" fill="#34495E" stroke="#1A252F" stroke-width="4"/>
+  
+  <!-- Pencere 1 -->
+  <rect x="200" y="290" width="51" height="51" fill="#F39C12" rx="5"/>
+  
+  <!-- Pencere 2 -->
+  <rect x="280" y="290" width="51" height="51" fill="#F39C12" rx="5"/>
+  
+  <!-- Tekerlek 1 -->
+  <circle cx="171" cy="405" r="43" fill="#1A252F" stroke="#ECF0F1" stroke-width="4"/>
+  <circle cx="171" cy="405" r="21" fill="#95A5A6"/>
+  
+  <!-- Tekerlek 2 -->
+  <circle cx="341" cy="405" r="43" fill="#1A252F" stroke="#ECF0F1" stroke-width="4"/>
+  <circle cx="341" cy="405" r="21" fill="#95A5A6"/>
+  
+  <!-- Baca dumanı -->
+  <circle cx="203" cy="140" r="15" fill="#ECF0F1" opacity="0.7"/>
+  <circle cx="220" cy="120" r="20" fill="#ECF0F1" opacity="0.5"/>
+  <circle cx="240" cy="100" r="25" fill="#ECF0F1" opacity="0.3"/>
+  
+  <!-- Ön tampon -->
+  <rect x="427" y="320" width="15" height="64" fill="#E74C3C" rx="3"/>
+</svg>
+
