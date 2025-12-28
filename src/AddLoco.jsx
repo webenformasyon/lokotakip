@@ -5,9 +5,15 @@ import { supabase } from "./supabase";
 export default function AddLoco({ onBack }) {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("faal");
+  const [kbType, setKbType] = useState("kb1");
 
   async function save() {
-    await supabase.from("locomotives").insert({ name, status });
+    const data = { 
+      name, 
+      status,
+      kb_type: status === "bakimda" ? kbType : null
+    };
+    await supabase.from("locomotives").insert(data);
     onBack();
   }
 
@@ -60,7 +66,7 @@ export default function AddLoco({ onBack }) {
         style={{ 
           width: "100%", 
           padding: "18px 20px", 
-          marginBottom: "25px",
+          marginBottom: status === "bakimda" ? "15px" : "25px",
           fontSize: "1.4rem",
           border: "3px solid #ccc",
           borderRadius: "10px",
@@ -72,8 +78,33 @@ export default function AddLoco({ onBack }) {
       >
         <option value="faal">🟢 Faal</option>
         <option value="cari_tamir">🟠 Cari Tamir</option>
+        <option value="bakimda">🔵 Bakımda</option>
         <option value="gayri_faal">🔴 Gayri Faal</option>
       </select>
+
+      {/* KB Seçeneği - Sadece Bakımda durumunda göster */}
+      {status === "bakimda" && (
+        <select
+          value={kbType}
+          onChange={(e) => setKbType(e.target.value)}
+          style={{ 
+            width: "100%", 
+            padding: "18px 20px", 
+            marginBottom: "25px",
+            fontSize: "1.4rem",
+            border: "3px solid #2196F3",
+            borderRadius: "10px",
+            boxSizing: "border-box",
+            backgroundColor: "#e3f2fd",
+            color: "#1976d2",
+            fontWeight: "600"
+          }}
+        >
+          <option value="kb1">KB1</option>
+          <option value="kb2">KB2</option>
+          <option value="kb3">KB3</option>
+        </select>
+      )}
 
       <button 
         onClick={save} 

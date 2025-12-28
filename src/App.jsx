@@ -2,18 +2,15 @@
 import { useState } from "react";
 import Home from "./Home";
 import AddLoco from "./AddLoco";
-import LocoDetail from "./LocoDetail";
 
 export default function App() {
   const [screen, setScreen] = useState("home");
-  const [selected, setSelected] = useState(null);
 
   if (screen === "add") return <AddLoco onBack={() => setScreen("home")} />;
-  if (screen === "detail") return <LocoDetail loco={selected} onBack={() => setScreen("home")} />;
 
   return (
     <div>
-      <Home onSelect={(loco) => { setSelected(loco); setScreen("detail"); }} />
+      <Home />
 
       <button
         onClick={() => setScreen("add")}

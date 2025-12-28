@@ -173,3 +173,357 @@
 - Padding değerleri büyütüldü (18-20px)
 - Emoji'ler kullanıcı deneyimini iyileştirdi
 
+### Veritabanı Yapısı Basitleştirildi - Notlar Tek Column
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:** `src/Home.jsx`, `database.md`
+
+**BÜYÜK DEĞİŞİKLİK: locomotive_logs Tablosu Kaldırıldı!**
+
+**ESKİ YAPI (Karmaşık):**
+```
+locomotives tablosu
+locomotive_logs tablosu (ayrı tablo)
+  - Her işlem ayrı satır
+  - loco_id ile ilişkili
+  - Join gerekli
+```
+
+**YENİ YAPI (Basit):**
+```
+locomotives tablosu
+  - notes kolonu eklendi (text)
+  - Tüm notlar tek bir alanda
+  - Join yok, daha hızlı
+```
+
+**Avantajları:**
+✅ **Çok daha basit** - Tek tablo, tek alan
+✅ **Daha hızlı** - Join yok, direkt erişim
+✅ **Kolay yedekleme** - Tüm veri tek tabloda
+✅ **Az karmaşık** - İlişkisel tablo yok
+
+**Veritabanı Migration:**
+
+Supabase SQL Editor'da:
+
+```sql
+-- 1. notes kolonunu ekle
+ALTER TABLE locomotives ADD COLUMN IF NOT EXISTS notes text DEFAULT '';
+
+-- 2. Eski verileri migrate et (opsiyonel)
+-- Eğer locomotive_logs tablosunda veri varsa:
+UPDATE locomotives l
+SET notes = (
+  SELECT title 
+  FROM locomotive_logs 
+  WHERE loco_id = l.id 
+  ORDER BY created_at DESC 
+  LIMIT 1
+)
+WHERE EXISTS (
+  SELECT 1 FROM locomotive_logs WHERE loco_id = l.id
+);
+
+-- 3. Eski tabloyu kaldır (dikkatli!)
+DROP TABLE IF EXISTS locomotive_logs;
+```
+
+**Kod Değişiklikleri:**
+- `logsMap` state kaldırıldı → `loco.notes` direkt kullanılıyor
+- `loadAllLogs()` fonksiyonu kaldırıldı
+- `locomotive_logs` subscription kaldırıldı
+- `saveLog()` → `saveNotes()` (locomotives tablosunu güncelliyor)
+- "İşlem" → "Notlar" terminolojisi
+
+**Kullanım:**
+- Not alanına tıkla
+- Text yaz veya düzenle
+- Kaydet → Tarih otomatik eklenir
+- Boş bırak → Tamamen boş kaydedilir
+
+---
+
+### İşlem Düzenleme Davranışı Düzeltildi
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+1. **ESKİ**: İşlem düzenlerken her zaman eski text'in sonuna ekliyordu
+   **YENİ**: Kullanıcı text'i tamamen kontrol ediyor
+
+2. **"İşlem metni boş olamaz" uyarısı kaldırıldı**
+   - Artık boş işlem eklenebilir
+   - Boş bırakılırsa **tamamen boş** kaydedilir (tarih bile eklenmez)
+   - Text varsa tarih eklenir: `"Yağ değişimi (28 Aralık 20:15)"`
+   - Text boşsa: `""` (boş string)
+
+**Kullanım:**
+- Popup açılınca mevcut text gösterilir
+- Text'i **tutup sonuna ekleyebilirsiniz** (manuel olarak)
+- Text'i **tamamen silip yeni yazabilirsiniz**
+- Sadece textarea'daki metin + tarih kaydedilir
+
+**Örnek:**
+```
+Mevcut: "Yağ değişimi (28 Aralık 10:00)"
+Popup açılır → "Yağ değişimi (28 Aralık 10:00)" görünür
+
+Seçenek 1 - Sonuna ekle:
+Yazarsınız: "Yağ değişimi (28 Aralık 10:00) Fren kontrolü"
+Kaydedilir: "Yağ değişimi (28 Aralık 10:00) Fren kontrolü (28 Aralık 14:00)"
+
+Seçenek 2 - Tamamen değiştir:
+Silersiniz ve yazarsınız: "Motor bakımı"
+Kaydedilir: "Motor bakımı (28 Aralık 14:00)"
+```
+
+---
+
+### Veritabanı Yapısı Normalize Edildi - kb_type Ayrı Column
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:** `src/Home.jsx`, `src/AddLoco.jsx`, `database.md`
+
+**ÖNEMLİ: Veritabanı Yapısı Değişti!**
+
+**ESKİ YAPI (Yanlış):**
+```
+status: 'faal', 'cari_tamir', 'bakimda_kb1', 'bakimda_kb2', 'bakimda_kb3', 'gayri_faal'
+```
+
+**YENİ YAPI (Doğru - Normalize):**
+```
+status: 'faal', 'cari_tamir', 'bakimda', 'gayri_faal'
+kb_type: 'kb1', 'kb2', 'kb3' (sadece status='bakimda' olduğunda)
+```
+
+**1. Veritabanı Değişiklikleri**
+
+**locomotives tablosu:**
+- `status` - 4 değer: 'faal', 'cari_tamir', 'bakimda', 'gayri_faal'
+- `kb_type` - **YENİ COLUMN**: 'kb1', 'kb2', 'kb3' (nullable)
+- Trigger eklendi: Bakımda değilse kb_type otomatik null olur
+
+**locomotive_logs tablosu:**
+- `status_after` - 4 değer
+- `kb_type_after` - **YENİ COLUMN**: KB durumunu loglar
+
+**2. Kod Güncellemeleri**
+
+**Home.jsx:**
+- `statusText(status, kbType)` - artık 2 parametre alıyor
+- `isBakimda(status)` - sadece status kontrolü yapıyor
+- `changeStatus(locoId, newStatus, kbType)` - kb_type parametresi eklendi
+- KB butonları `loco.kb_type` ile kontrol ediliyor
+
+**AddLoco.jsx:**
+- `kbType` state eklendi
+- Bakımda seçildiğinde KB dropdown gösteriliyor
+- Save işleminde hem status hem kb_type kaydediliyor
+
+**3. Kullanım**
+
+Ana Sayfada:
+1. "🔵 Bakımda" butonuna tıkla → status='bakimda', kb_type='kb1' olur
+2. KB1, KB2, KB3 butonları görünür
+3. İstediğin KB'ye tıkla → sadece kb_type güncellenir, status='bakimda' kalır
+4. Başka duruma geç (Faal, Cari Tamir, Gayri Faal) → kb_type otomatik null olur
+
+Yeni Loko Eklerken:
+1. Durum olarak "Bakımda" seç
+2. KB dropdown çıkar
+3. KB1/KB2/KB3 seç
+4. Kaydet
+
+**⚠️ ÇOK ÖNEMLİ - Veritabanı Migration Gerekli:**
+
+Supabase SQL Editor'da bu SQL'i çalıştırın:
+
+```sql
+-- 1. YENİ COLUMN'LARI EKLE
+ALTER TABLE locomotives ADD COLUMN IF NOT EXISTS kb_type text;
+ALTER TABLE locomotive_logs ADD COLUMN IF NOT EXISTS kb_type_after text;
+
+-- 2. CONSTRAINTS EKLE
+ALTER TABLE locomotives DROP CONSTRAINT IF EXISTS locomotives_status_check;
+ALTER TABLE locomotives ADD CONSTRAINT locomotives_status_check 
+  CHECK (status IN ('faal', 'cari_tamir', 'bakimda', 'gayri_faal'));
+
+ALTER TABLE locomotives DROP CONSTRAINT IF EXISTS locomotives_kb_type_check;
+ALTER TABLE locomotives ADD CONSTRAINT locomotives_kb_type_check 
+  CHECK (kb_type IN ('kb1', 'kb2', 'kb3') OR kb_type IS NULL);
+
+ALTER TABLE locomotive_logs DROP CONSTRAINT IF EXISTS locomotive_logs_status_after_check;
+ALTER TABLE locomotive_logs ADD CONSTRAINT locomotive_logs_status_after_check 
+  CHECK (status_after IN ('faal', 'cari_tamir', 'bakimda', 'gayri_faal'));
+
+ALTER TABLE locomotive_logs DROP CONSTRAINT IF EXISTS locomotive_logs_kb_type_after_check;
+ALTER TABLE locomotive_logs ADD CONSTRAINT locomotive_logs_kb_type_after_check 
+  CHECK (kb_type_after IN ('kb1', 'kb2', 'kb3') OR kb_type_after IS NULL);
+
+-- 3. TRIGGER EKLE (kb_type otomatik yönetimi)
+CREATE OR REPLACE FUNCTION check_kb_type_constraint()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.status = 'bakimda' AND NEW.kb_type IS NULL THEN
+    RAISE EXCEPTION 'kb_type must be set when status is bakimda';
+  END IF;
+  IF NEW.status != 'bakimda' AND NEW.kb_type IS NOT NULL THEN
+    NEW.kb_type := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS enforce_kb_type ON locomotives;
+CREATE TRIGGER enforce_kb_type
+BEFORE INSERT OR UPDATE ON locomotives
+FOR EACH ROW
+EXECUTE PROCEDURE check_kb_type_constraint();
+
+-- 4. ESKİ VERILERI MIGRATE ET (eğer varsa)
+-- Eski bakimda_kb1, bakimda_kb2, bakimda_kb3 statusları varsa:
+UPDATE locomotives SET status = 'bakimda', kb_type = 'kb1' WHERE status = 'bakimda_kb1';
+UPDATE locomotives SET status = 'bakimda', kb_type = 'kb2' WHERE status = 'bakimda_kb2';
+UPDATE locomotives SET status = 'bakimda', kb_type = 'kb3' WHERE status = 'bakimda_kb3';
+
+UPDATE locomotive_logs SET status_after = 'bakimda', kb_type_after = 'kb1' WHERE status_after = 'bakimda_kb1';
+UPDATE locomotive_logs SET status_after = 'bakimda', kb_type_after = 'kb2' WHERE status_after = 'bakimda_kb2';
+UPDATE locomotive_logs SET status_after = 'bakimda', kb_type_after = 'kb3' WHERE status_after = 'bakimda_kb3';
+```
+
+**Avantajları:**
+✅ Daha temiz veritabanı yapısı
+✅ Normalize edilmiş data
+✅ KB tipi kolayca değiştirilebilir
+✅ Status ve KB birbirinden bağımsız yönetilebilir
+
+---
+
+### Durum Butonu Güncellendi
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklik:**
+- Tab butonu "🟠 Tamir" → "🟠 Cari Tamir" olarak güncellendi
+- Artık tam isim gösteriliyor: **Faal / Cari Tamir / Gayri Faal**
+
+---
+
+### Tarih Otomatik Text'e Ekleniyor
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**BÜYÜK DEĞİŞİKLİK - Tarih Artık Text İçinde:**
+
+1. **Yeni İşlem Eklerken**
+   - Kullanıcı sadece işlem metnini yazar: "Yağ değişimi yapıldı"
+   - Sistem otomatik tarih ekler: "Yağ değişimi yapıldı (28 Aralık 20:10)"
+   - Bu tam metin veritabanına `title` olarak kaydedilir
+
+2. **Mevcut İşlemi Düzenlerken**
+   - Kullanıcı popup'ta sadece mevcut metni görür
+   - Yeni bir ekleme yazdığında: "Fren kontrolü yapıldı"
+   - Sistem eskiyi korur ve sona ekler: "Yağ değişimi yapıldı (28 Aralık 20:10) Fren kontrolü yapıldı (28 Aralık 21:15)"
+   - Tüm işlem geçmişi tek metinde birikir
+
+3. **Görüntüleme**
+   - Veritabanındaki tam metin olduğu gibi gösterilir
+   - Tarih ayrı bir eleman değil, metnin parçası
+   - Tüm geçmiş işlemler ve tarihleri tek satırda
+
+4. **WhatsApp Paylaşımı**
+   - Tam metin (tüm işlemler + tarihler) paylaşılır
+
+**Teknik Detaylar:**
+- `saveLog()` fonksiyonu güncellendi
+- Yeni işlem: `${editLogText} ${dateStamp}`
+- Düzenleme: `${editingLog.title} ${editLogText} ${dateStamp}`
+- `formatLogDate()` şimdiki zamanı formatlar
+- Tarih format: `(28 Aralık 20:10)`
+
+**Örnek Akış:**
+```
+İlk ekleme:    "Yağ değişimi" → "Yağ değişimi (28 Aralık 10:00)"
+Düzenleme:     "Fren kontrolü" → "Yağ değişimi (28 Aralık 10:00) Fren kontrolü (28 Aralık 14:30)"
+Tekrar düzenleme: "Motor bakımı" → "Yağ değişimi (28 Aralık 10:00) Fren kontrolü (28 Aralık 14:30) Motor bakımı (28 Aralık 18:00)"
+```
+
+---
+
+### İşlem Yönetimi Basitleştirildi
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:** `src/Home.jsx`, `src/App.jsx`
+
+**Değişiklikler:**
+
+1. **Detay Sayfası Kaldırıldı**
+   - `LocoDetail.jsx` artık kullanılmıyor
+   - Tüm işlemler ana sayfada yapılıyor
+   - Daha hızlı ve kolay kullanım
+
+2. **Tek Popup ile Hem Ekleme Hem Düzenleme**
+   - İşlem varsa: Mevcut işlem gösteriliyor, tıklayınca düzenleme popup'ı
+   - İşlem yoksa: "+ İşlemler için tıklayın" mesajı
+   - Her iki durumda da aynı popup kullanılıyor
+   - Popup'ta: Textarea, Kaydet, Sil (sadece düzenlemede), Kapat butonları
+
+3. **"Yeni İşlem Ekle" Butonu Kaldırıldı**
+   - Artık işlem alanına direkt tıklanıyor
+   - Daha sezgisel kullanım
+
+4. **Metin Değişikliği**
+   - "İşlem eklemek için tıklayın" → "İşlemler için tıklayın"
+
+**Teknik Detaylar:**
+- `openAddLog()` fonksiyonu eklendi
+- `saveLog()` fonksiyonu hem ekleme hem güncelleme yapıyor
+- `closeLogPopup()` fonksiyonu tüm popup state'lerini temizliyor
+- `editingLocoId` state'i yeni işlem için loko id'yi tutuyor
+- `App.jsx`'den `onSelect` props'u kaldırıldı
+
+---
+
+### Büyük UI Değişiklikleri
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Yeni Özellikler:**
+
+1. **Tab/Switch Durum Seçici**
+   - Dropdown kaldırıldı
+   - 3 tab butonu: 🟢 Faal, 🟠 Tamir, 🔴 Gayri Faal
+   - Seçili tab kalın border (3px) ve renkli arka plan
+   - Seçili olmayan tab ince border (2px) ve beyaz
+   - Her tab tıklanabilir ve anında güncelleniyor
+
+2. **Lokomotif Silme**
+   - Her lokoda 🗑️ Sil butonu (kırmızı)
+   - Onay dialogu ile silme
+   - `is_active = false` yapıyor (soft delete)
+   - Silinen lokolar listeden kalkıyor
+
+3. **İşlem Yönetimi Yenilendi**
+   - "Son İşlem:" başlığı kaldırıldı
+   - İşlem metni direkt gösteriliyor (mavi kutu)
+   - İşleme tıklayınca popup açılıyor
+   - İşlem yoksa: "+ İşlem eklemek için tıklayın"
+
+4. **İşlem Düzenleme Popup**
+   - Tam ekran modal overlay
+   - Textarea ile düzenleme
+   - 3 buton: ✅ Kaydet, 🗑️ Sil, ✖️ Kapat
+   - Popup dışına tıklayınca kapanıyor
+   - Silme işleminde onay dialogu
+
+5. **Detay Sayfası Kaldırıldı**
+   - Artık detay sayfasına gerek yok
+   - Tüm işlemler ana sayfada
+   - Daha hızlı kullanım
+
+**Teknik Detaylar:**
+- `editingLog` state ile popup kontrolü
+- `openEditLog()`, `saveEditLog()`, `deleteLog()` fonksiyonları
+- `deleteLoco()` fonksiyonu soft delete için
+- Event propagation kontrolü (`stopPropagation()`)
+- Hover efektleri eklendi
+

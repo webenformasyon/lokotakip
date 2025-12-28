@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
-export default function Home({ onSelect }) {
+export default function Home() {
   const [locos, setLocos] = useState([]);
-  const [logsMap, setLogsMap] = useState({});
+  const [editingLoco, setEditingLoco] = useState(null);
+  const [editNotesText, setEditNotesText] = useState("");
 
   async function loadLocos() {
     const { data, error } = await supabase
@@ -15,24 +16,7 @@ export default function Home({ onSelect }) {
 
     if (!error) {
       setLocos(data);
-      // Her loko için işlemleri yükle
-      loadAllLogs(data);
     }
-  }
-
-  async function loadAllLogs(locomotives) {
-    const logsData = {};
-    for (const loco of locomotives) {
-      const { data } = await supabase
-        .from("locomotive_logs")
-        .select("*")
-        .eq("loco_id", loco.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      
-      logsData[loco.id] = data || [];
-    }
-    setLogsMap(logsData);
   }
 
   useEffect(() => {
@@ -56,26 +40,92 @@ export default function Home({ onSelect }) {
       case "faal": return "green";
       case "cari_tamir": return "orange";
       case "gayri_faal": return "red";
+      case "bakimda": return "blue";
       default: return "grey";
     }
   }
 
-  function statusText(status) {
+  function statusText(status, kbType) {
     switch (status) {
       case "faal": return "Faal";
       case "cari_tamir": return "Cari Tamir";
       case "gayri_faal": return "Gayri Faal";
+      case "bakimda": return kbType ? `Bakımda (${kbType.toUpperCase()})` : "Bakımda";
       default: return status;
     }
   }
 
-  async function changeStatus(locoId, newStatus) {
+  function isBakimda(status) {
+    return status === "bakimda";
+  }
+
+  async function changeStatus(locoId, newStatus, kbType = null) {
+    const updateData = { status: newStatus };
+    
+    // Eğer bakımda durumuna geçiyorsak ve kb_type belirtilmemişse, kb1 yap
+    if (newStatus === "bakimda") {
+      updateData.kb_type = kbType || "kb1";
+    } else {
+      // Bakımda değilse kb_type'ı null yap
+      updateData.kb_type = null;
+    }
+    
     await supabase
       .from("locomotives")
-      .update({ status: newStatus })
+      .update(updateData)
       .eq("id", locoId);
     
     loadLocos();
+  }
+
+  async function deleteLoco(locoId) {
+    await supabase
+      .from("locomotives")
+      .update({ is_active: false })
+      .eq("id", locoId);
+    
+    loadLocos();
+  }
+
+  function openEditNotes(loco) {
+    setEditingLoco(loco);
+    setEditNotesText(loco.notes || "");
+  }
+
+  async function saveNotes() {
+    const trimmedText = editNotesText.trim();
+    
+    // Eğer text boş değilse tarih ekle, boşsa tamamen boş bırak
+    const now = new Date();
+    const dateStamp = formatLogDate(now.toISOString());
+    const finalNotes = trimmedText ? `${trimmedText} ${dateStamp}` : "";
+
+    await supabase
+      .from("locomotives")
+      .update({ notes: finalNotes })
+      .eq("id", editingLoco.id);
+
+    setEditingLoco(null);
+    setEditNotesText("");
+    loadLocos();
+  }
+
+  async function deleteNotes() {
+    if (confirm("Notu silmek istediğinize emin misiniz?")) {
+      await supabase
+        .from("locomotives")
+        .update({ notes: "" })
+        .eq("id", editingLoco.id);
+
+      setEditingLoco(null);
+      setEditNotesText("");
+      loadLocos();
+    }
+  }
+
+  function closeNotesPopup() {
+    setEditingLoco(null);
+    setEditNotesText("");
   }
 
   function getTurkishDate() {
@@ -91,20 +141,30 @@ export default function Home({ onSelect }) {
     return `${dayName}, ${day} ${month} ${year}`;
   }
 
+  function formatLogDate(dateString) {
+    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `(${day} ${month} ${hours}:${minutes})`;
+  }
+
   async function shareOnWhatsApp() {
     let message = `🚂 *Lokomotif Durumu*\n`;
     message += `📅 ${getTurkishDate()}\n`;
     message += `━━━━━━━━━━━━━━━\n\n`;
 
     for (const loco of locos) {
-      const logs = logsMap[loco.id] || [];
       message += `🔹 *${loco.name}*\n`;
-      message += `   Durum: ${statusText(loco.status)}\n`;
+      message += `   Durum: ${statusText(loco.status, loco.kb_type)}\n`;
       
-      if (logs.length > 0) {
-        message += `   Son İşlem: ${logs[0].title}\n`;
+      if (loco.notes && loco.notes.trim()) {
+        message += `   Not: ${loco.notes}\n`;
       } else {
-        message += `   İşlem kaydı yok\n`;
+        message += `   Not kaydı yok\n`;
       }
       message += `\n`;
     }
@@ -145,7 +205,6 @@ export default function Home({ onSelect }) {
       </h2>
 
       {locos.map((loco) => {
-        const logs = logsMap[loco.id] || [];
         return (
           <div
             key={loco.id}
@@ -165,74 +224,216 @@ export default function Home({ onSelect }) {
                 backgroundColor: "#f9f9f9"
               }}
             >
-              {/* Loko Adı - Tıklanabilir */}
-              <div 
-                onClick={() => onSelect(loco)}
-                style={{ 
+              {/* Loko Adı ve Sil Butonu */}
+              <div style={{ 
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "15px"
+              }}>
+                <div style={{ 
                   fontSize: "1.8rem",
                   fontWeight: "bold",
-                  marginBottom: "15px",
-                  color: "#000",
+                  color: "#000"
+                }}>
+                  🚂 {loco.name}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`${loco.name} lokomotifini kaldırmak istediğinize emin misiniz?`)) {
+                      deleteLoco(loco.id);
+                    }
+                  }}
+                  style={{
+                    padding: "8px 12px",
+                    fontSize: "1.1rem",
+                    backgroundColor: "#f44336",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "bold"
+                  }}
+                >
+                  🗑️ Sil
+                </button>
+              </div>
+              
+              {/* Durum Switch/Tab */}
+              <div style={{ 
+                display: "flex",
+                gap: "5px",
+                marginBottom: "10px"
+              }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    changeStatus(loco.id, "faal");
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    fontSize: "1.1rem",
+                    fontWeight: "bold",
+                    border: loco.status === "faal" ? "3px solid green" : "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: loco.status === "faal" ? "#e8f5e9" : "white",
+                    color: loco.status === "faal" ? "green" : "#666",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  🟢 Faal
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    changeStatus(loco.id, "cari_tamir");
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    fontSize: "1.1rem",
+                    fontWeight: "bold",
+                    border: loco.status === "cari_tamir" ? "3px solid orange" : "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: loco.status === "cari_tamir" ? "#fff3e0" : "white",
+                    color: loco.status === "cari_tamir" ? "orange" : "#666",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  🟠 Cari Tamir
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    changeStatus(loco.id, "bakimda", "kb1");
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    fontSize: "1.1rem",
+                    fontWeight: "bold",
+                    border: isBakimda(loco.status) ? "3px solid blue" : "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: isBakimda(loco.status) ? "#e3f2fd" : "white",
+                    color: isBakimda(loco.status) ? "blue" : "#666",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  🔵 Bakımda
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    changeStatus(loco.id, "gayri_faal");
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    fontSize: "1.1rem",
+                    fontWeight: "bold",
+                    border: loco.status === "gayri_faal" ? "3px solid red" : "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: loco.status === "gayri_faal" ? "#ffebee" : "white",
+                    color: loco.status === "gayri_faal" ? "red" : "#666",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  🔴 Gayri Faal
+                </button>
+              </div>
+
+              {/* KB Alt Seçenekleri - Sadece Bakımda durumunda göster */}
+              {isBakimda(loco.status) && (
+                <div style={{ 
+                  display: "flex",
+                  gap: "5px",
+                  marginBottom: "10px",
+                  paddingLeft: "10px"
+                }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      changeStatus(loco.id, "bakimda", "kb1");
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      fontSize: "1rem",
+                      fontWeight: "bold",
+                      border: loco.kb_type === "kb1" ? "3px solid #1976d2" : "2px solid #90caf9",
+                      borderRadius: "6px",
+                      backgroundColor: loco.kb_type === "kb1" ? "#bbdefb" : "#e3f2fd",
+                      color: loco.kb_type === "kb1" ? "#0d47a1" : "#1976d2",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    KB1
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      changeStatus(loco.id, "bakimda", "kb2");
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      fontSize: "1rem",
+                      fontWeight: "bold",
+                      border: loco.kb_type === "kb2" ? "3px solid #1976d2" : "2px solid #90caf9",
+                      borderRadius: "6px",
+                      backgroundColor: loco.kb_type === "kb2" ? "#bbdefb" : "#e3f2fd",
+                      color: loco.kb_type === "kb2" ? "#0d47a1" : "#1976d2",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    KB2
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      changeStatus(loco.id, "bakimda", "kb3");
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      fontSize: "1rem",
+                      fontWeight: "bold",
+                      border: loco.kb_type === "kb3" ? "3px solid #1976d2" : "2px solid #90caf9",
+                      borderRadius: "6px",
+                      backgroundColor: loco.kb_type === "kb3" ? "#bbdefb" : "#e3f2fd",
+                      color: loco.kb_type === "kb3" ? "#0d47a1" : "#1976d2",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    KB3
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Notlar */}
+            {loco.notes && loco.notes.trim() ? (
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditNotes(loco);
+                }}
+                style={{
+                  padding: "15px",
+                  backgroundColor: "#fff",
+                  borderTop: "1px solid #e0e0e0",
                   cursor: "pointer"
                 }}
               >
-                🚂 {loco.name}
-              </div>
-              
-              {/* Durum Seçici */}
-              <div style={{ 
-                display: "flex",
-                alignItems: "center",
-                gap: "10px"
-              }}>
-                <span style={{ 
-                  fontSize: "1.3rem",
-                  color: "#666",
-                  fontWeight: "600"
-                }}>
-                  Durum:
-                </span>
-                <select
-                  value={loco.status}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    changeStatus(loco.id, e.target.value);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    padding: "10px 15px",
-                    fontSize: "1.2rem",
-                    fontWeight: "bold",
-                    border: `3px solid ${statusColor(loco.status)}`,
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    color: statusColor(loco.status),
-                    cursor: "pointer",
-                    minWidth: "180px"
-                  }}
-                >
-                  <option value="faal" style={{ color: "green" }}>🟢 Faal</option>
-                  <option value="cari_tamir" style={{ color: "orange" }}>🟠 Cari Tamir</option>
-                  <option value="gayri_faal" style={{ color: "red" }}>🔴 Gayri Faal</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Son İşlem */}
-            {logs.length > 0 && (
-              <div style={{
-                padding: "15px",
-                backgroundColor: "#fff",
-                borderTop: "1px solid #e0e0e0"
-              }}>
-                <div style={{ 
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                  marginBottom: "10px",
-                  color: "#666"
-                }}>
-                  Son İşlem:
-                </div>
                 <div style={{
                   fontSize: "1.2rem",
                   padding: "12px",
@@ -240,15 +441,149 @@ export default function Home({ onSelect }) {
                   borderRadius: "8px",
                   borderLeft: "5px solid #2196F3",
                   color: "#000",
-                  lineHeight: "1.5"
-                }}>
-                  {logs[0].title}
+                  lineHeight: "1.5",
+                  transition: "all 0.2s"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#bbdefb"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#e3f2fd"}
+                >
+                  {loco.notes}
                 </div>
+              </div>
+            ) : (
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditNotes(loco);
+                }}
+                style={{
+                  padding: "15px",
+                  backgroundColor: "#fff",
+                  borderTop: "1px solid #e0e0e0",
+                  cursor: "pointer",
+                  textAlign: "center",
+                  color: "#999",
+                  fontSize: "1.1rem",
+                  fontStyle: "italic"
+                }}
+              >
+                + Notlar için tıklayın
               </div>
             )}
           </div>
         );
       })}
+
+      {/* Notlar Düzenleme Popup */}
+      {editingLoco && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 2000,
+          padding: "20px"
+        }}
+        onClick={closeNotesPopup}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "25px",
+              maxWidth: "500px",
+              width: "100%",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+            }}
+          >
+            <h3 style={{ 
+              marginTop: 0,
+              marginBottom: "20px",
+              fontSize: "1.5rem",
+              color: "#000"
+            }}>
+              Notları Düzenle
+            </h3>
+            
+            <textarea
+              value={editNotesText}
+              onChange={(e) => setEditNotesText(e.target.value)}
+              placeholder="Not girin..."
+              rows="4"
+              style={{
+                width: "100%",
+                padding: "15px",
+                fontSize: "1.2rem",
+                border: "2px solid #ccc",
+                borderRadius: "8px",
+                boxSizing: "border-box",
+                marginBottom: "20px",
+                resize: "vertical",
+                lineHeight: "1.5"
+              }}
+              autoFocus
+            />
+            
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={saveNotes}
+                style={{
+                  flex: 1,
+                  padding: "15px",
+                  fontSize: "1.3rem",
+                  fontWeight: "bold",
+                  backgroundColor: "#4CAF50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer"
+                }}
+              >
+                ✅ Kaydet
+              </button>
+              {editingLoco.notes && editingLoco.notes.trim() && (
+                <button
+                  onClick={deleteNotes}
+                  style={{
+                    flex: 1,
+                    padding: "15px",
+                    fontSize: "1.3rem",
+                    fontWeight: "bold",
+                    backgroundColor: "#f44336",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer"
+                  }}
+                >
+                  🗑️ Sil
+                </button>
+              )}
+              <button
+                onClick={closeNotesPopup}
+                style={{
+                  padding: "15px",
+                  fontSize: "1.3rem",
+                  fontWeight: "bold",
+                  backgroundColor: "#999",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer"
+                }}
+              >
+                ✖️
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* WhatsApp Paylaş Butonu */}
       <button
