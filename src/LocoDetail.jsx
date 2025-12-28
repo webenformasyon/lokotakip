@@ -62,24 +62,27 @@ export default function LocoDetail({ loco, onBack }) {
         onClick={onBack}
         style={{
           marginBottom: "20px",
-          padding: "12px 20px",
-          fontSize: "1.2rem"
+          padding: "15px 25px",
+          fontSize: "1.4rem",
+          fontWeight: "bold"
         }}
       >
         ← Geri
       </button>
       
       <h2 style={{ 
-        fontSize: "1.8rem",
-        marginBottom: "1rem"
+        fontSize: "2rem",
+        marginBottom: "1rem",
+        fontWeight: "bold"
       }}>
         🚂 {loco.name}
       </h2>
 
       <h3 style={{ 
-        fontSize: "1.4rem",
+        fontSize: "1.6rem",
         marginTop: "2rem",
-        marginBottom: "1rem"
+        marginBottom: "1rem",
+        fontWeight: "bold"
       }}>
         İşlem Geçmişi
       </h3>
@@ -88,19 +91,20 @@ export default function LocoDetail({ loco, onBack }) {
         <button 
           onClick={() => setShowForm(true)} 
           style={{ 
-            padding: "15px 20px", 
+            padding: "18px 20px", 
             marginBottom: "20px",
-            fontSize: "1.2rem",
-            borderRadius: "8px",
+            fontSize: "1.4rem",
+            borderRadius: "10px",
             backgroundColor: "#2196F3",
             color: "white",
             border: "none",
             cursor: "pointer",
             width: "100%",
-            fontWeight: "bold"
+            fontWeight: "bold",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
           }}
         >
-          + Yeni İşlem Ekle
+          ➕ Yeni İşlem Ekle
         </button>
       ) : (
         <div style={{
@@ -113,7 +117,8 @@ export default function LocoDetail({ loco, onBack }) {
           <h4 style={{ 
             marginTop: 0, 
             marginBottom: "15px",
-            fontSize: "1.3rem"
+            fontSize: "1.5rem",
+            fontWeight: "bold"
           }}>
             Yeni İşlem
           </h4>
@@ -125,32 +130,34 @@ export default function LocoDetail({ loco, onBack }) {
             rows="4"
             style={{
               width: "100%",
-              padding: "15px",
-              marginBottom: "15px",
-              fontSize: "1.2rem",
-              border: "2px solid #ccc",
-              borderRadius: "6px",
+              padding: "18px",
+              marginBottom: "18px",
+              fontSize: "1.3rem",
+              border: "3px solid #ccc",
+              borderRadius: "8px",
               boxSizing: "border-box",
-              resize: "vertical"
+              resize: "vertical",
+              lineHeight: "1.5"
             }}
           />
           
-          <div style={{ display: "flex", gap: "10px" }}>
+          <div style={{ display: "flex", gap: "12px" }}>
             <button
               onClick={addLog}
               style={{
                 flex: 1,
-                padding: "15px",
-                fontSize: "1.2rem",
-                borderRadius: "6px",
+                padding: "18px",
+                fontSize: "1.4rem",
+                borderRadius: "8px",
                 backgroundColor: "#4CAF50",
                 color: "white",
                 border: "none",
                 cursor: "pointer",
-                fontWeight: "bold"
+                fontWeight: "bold",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.2)"
               }}
             >
-              Kaydet
+              ✅ Kaydet
             </button>
             <button
               onClick={() => {
@@ -159,16 +166,18 @@ export default function LocoDetail({ loco, onBack }) {
               }}
               style={{
                 flex: 1,
-                padding: "15px",
-                fontSize: "1.2rem",
-                borderRadius: "6px",
+                padding: "18px",
+                fontSize: "1.4rem",
+                borderRadius: "8px",
                 backgroundColor: "#f44336",
                 color: "white",
                 border: "none",
-                cursor: "pointer"
+                cursor: "pointer",
+                fontWeight: "bold",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.2)"
               }}
             >
-              İptal
+              ❌ İptal
             </button>
           </div>
         </div>
@@ -178,28 +187,30 @@ export default function LocoDetail({ loco, onBack }) {
         <div 
           key={log.id} 
           style={{ 
-            padding: "18px", 
-            border: "2px solid #e0e0e0", 
-            marginBottom: "12px",
-            borderRadius: "8px",
+            padding: "20px", 
+            border: "3px solid #e0e0e0", 
+            marginBottom: "15px",
+            borderRadius: "10px",
             backgroundColor: "#f9f9f9",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+            boxShadow: "0 3px 6px rgba(0,0,0,0.1)"
           }}
         >
           <div style={{ 
-            fontSize: "1.15rem",
-            marginBottom: "10px",
-            color: "#333",
-            lineHeight: "1.5"
+            fontSize: "1.3rem",
+            marginBottom: "12px",
+            color: "#000",
+            lineHeight: "1.6",
+            fontWeight: "500"
           }}>
             {log.title}
           </div>
           <div style={{ 
-            fontSize: "0.95rem",
+            fontSize: "1.1rem",
             color: "#888",
-            fontStyle: "italic"
+            fontStyle: "italic",
+            fontWeight: "500"
           }}>
-            {new Date(log.created_at).toLocaleString('tr-TR', {
+            📅 {new Date(log.created_at).toLocaleString('tr-TR', {
               day: 'numeric',
               month: 'long',
               year: 'numeric',

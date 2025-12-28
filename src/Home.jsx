@@ -136,9 +136,10 @@ export default function Home({ onSelect }) {
       </div>
 
       <h2 style={{ 
-        fontSize: "1.8rem",
+        fontSize: "2rem",
         marginBottom: "1.5rem",
-        textAlign: "center"
+        textAlign: "center",
+        fontWeight: "bold"
       }}>
         Lokomotifler
       </h2>
@@ -168,9 +169,9 @@ export default function Home({ onSelect }) {
               <div 
                 onClick={() => onSelect(loco)}
                 style={{ 
-                  fontSize: "1.4rem",
+                  fontSize: "1.8rem",
                   fontWeight: "bold",
-                  marginBottom: "12px",
+                  marginBottom: "15px",
                   color: "#000",
                   cursor: "pointer"
                 }}
@@ -185,9 +186,9 @@ export default function Home({ onSelect }) {
                 gap: "10px"
               }}>
                 <span style={{ 
-                  fontSize: "1rem",
+                  fontSize: "1.3rem",
                   color: "#666",
-                  fontWeight: "500"
+                  fontWeight: "600"
                 }}>
                   Durum:
                 </span>
@@ -199,15 +200,15 @@ export default function Home({ onSelect }) {
                   }}
                   onClick={(e) => e.stopPropagation()}
                   style={{
-                    padding: "8px 12px",
-                    fontSize: "1rem",
+                    padding: "10px 15px",
+                    fontSize: "1.2rem",
                     fontWeight: "bold",
-                    border: `2px solid ${statusColor(loco.status)}`,
-                    borderRadius: "6px",
+                    border: `3px solid ${statusColor(loco.status)}`,
+                    borderRadius: "8px",
                     backgroundColor: "white",
                     color: statusColor(loco.status),
                     cursor: "pointer",
-                    minWidth: "150px"
+                    minWidth: "180px"
                   }}
                 >
                   <option value="faal" style={{ color: "green" }}>🟢 Faal</option>
@@ -225,20 +226,21 @@ export default function Home({ onSelect }) {
                 borderTop: "1px solid #e0e0e0"
               }}>
                 <div style={{ 
-                  fontSize: "1rem",
+                  fontSize: "1.2rem",
                   fontWeight: "bold",
-                  marginBottom: "8px",
+                  marginBottom: "10px",
                   color: "#666"
                 }}>
                   Son İşlem:
                 </div>
                 <div style={{
-                  fontSize: "1.05rem",
-                  padding: "10px",
+                  fontSize: "1.2rem",
+                  padding: "12px",
                   backgroundColor: "#e3f2fd",
-                  borderRadius: "6px",
-                  borderLeft: "4px solid #2196F3",
-                  color: "#333"
+                  borderRadius: "8px",
+                  borderLeft: "5px solid #2196F3",
+                  color: "#000",
+                  lineHeight: "1.5"
                 }}>
                   {logs[0].title}
                 </div>
@@ -253,24 +255,24 @@ export default function Home({ onSelect }) {
         onClick={shareOnWhatsApp}
         style={{
           width: "100%",
-          padding: "15px",
-          fontSize: "1.2rem",
+          padding: "18px",
+          fontSize: "1.4rem",
           fontWeight: "bold",
           backgroundColor: "#25D366",
           color: "white",
           border: "none",
-          borderRadius: "8px",
+          borderRadius: "10px",
           cursor: "pointer",
           marginTop: "20px",
           marginBottom: "20px",
-          boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: "10px"
+          gap: "12px"
         }}
       >
-        <span style={{ fontSize: "1.5rem" }}>📱</span>
+        <span style={{ fontSize: "1.8rem" }}>📱</span>
         WhatsApp'ta Paylaş
       </button>
     </div>

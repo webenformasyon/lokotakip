@@ -116,3 +116,60 @@
    - Format: "🚂 [loko adı]"
    - **Sonuç:** Artık loko numaraları hem mobilde hem desktop'ta net görünüyor
 
+### Durum Değiştirme Özelliği
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Yeni Özellik:**
+1. **Durum Dropdown'u**
+   - Her lokomotif kartında durum değiştirme dropdown'u
+   - 3 seçenek: 🟢 Faal, 🟠 Cari Tamir, 🔴 Gayri Faal
+   - Renkli border ile vurgulama (duruma göre)
+   - Anında Supabase'e kaydediliyor
+
+2. **Kullanıcı Deneyimi**
+   - Sadece loko adına tıklayınca detay sayfasına gidiyor
+   - Dropdown'a tıklayınca durum değiştiriliyor
+   - Görsel olarak net ve kullanımı kolay
+   - Mobil ve desktop'ta mükemmel çalışıyor
+
+3. **Teknik Detaylar**
+   - `changeStatus()` fonksiyonu eklendi
+   - Realtime güncelleme mevcut
+   - `stopPropagation()` ile olay yayılması engellendi
+
+### Android Mobil İçin Font Büyütme
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:** `src/Home.jsx`, `src/AddLoco.jsx`, `src/LocoDetail.jsx`
+
+**Değişiklikler:**
+1. **Ana Sayfa (Home.jsx)**
+   - Başlık: 2rem (kalın)
+   - Loko adı: 1.8rem (kalın)
+   - Durum label: 1.3rem
+   - Dropdown: 1.2rem, 3px border, 180px genişlik
+   - İşlem başlığı: 1.2rem
+   - İşlem metni: 1.2rem, line-height 1.5
+   - WhatsApp butonu: 1.4rem, 18px padding
+
+2. **Loko Ekleme (AddLoco.jsx)**
+   - Başlık: 2rem
+   - Geri butonu: 1.4rem
+   - Input: 1.4rem, 18px padding, 3px border
+   - Select: 1.4rem, emoji eklendi
+   - Kaydet butonu: 1.5rem, ✅ emoji
+
+3. **Loko Detay (LocoDetail.jsx)**
+   - Başlık: 2rem
+   - İşlem geçmişi: 1.6rem
+   - Yeni işlem butonu: 1.4rem, ➕ emoji
+   - Textarea: 1.3rem, line-height 1.5
+   - Kaydet/İptal: 1.4rem, ✅❌ emoji
+   - İşlem kartları: 1.3rem, 📅 emoji
+
+**Sonuç:**
+- Tüm yazılar Android telefonlarda çok daha net okunuyor
+- Border kalınlıkları artırıldı (3px)
+- Padding değerleri büyütüldü (18-20px)
+- Emoji'ler kullanıcı deneyimini iyileştirdi
+

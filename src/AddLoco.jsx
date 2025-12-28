@@ -22,32 +22,35 @@ export default function AddLoco({ onBack }) {
         onClick={onBack}
         style={{
           marginBottom: "20px",
-          padding: "12px 20px",
-          fontSize: "1.2rem"
+          padding: "15px 25px",
+          fontSize: "1.4rem",
+          fontWeight: "bold"
         }}
       >
         ← Geri
       </button>
       
       <h2 style={{ 
-        fontSize: "1.8rem",
-        marginBottom: "1.5rem"
+        fontSize: "2rem",
+        marginBottom: "1.5rem",
+        fontWeight: "bold"
       }}>
         Yeni Lokomotif
       </h2>
 
       <input
-        placeholder="Loko adı"
+        placeholder="Loko adı (örn: 24100)"
         value={name}
         onChange={(e) => setName(e.target.value)}
         style={{ 
           width: "100%", 
-          padding: "15px 18px", 
-          marginBottom: "15px",
-          fontSize: "1.2rem",
-          border: "2px solid #ccc",
-          borderRadius: "8px",
-          boxSizing: "border-box"
+          padding: "18px 20px", 
+          marginBottom: "18px",
+          fontSize: "1.4rem",
+          border: "3px solid #ccc",
+          borderRadius: "10px",
+          boxSizing: "border-box",
+          fontWeight: "500"
         }}
       />
 
@@ -56,36 +59,38 @@ export default function AddLoco({ onBack }) {
         onChange={(e) => setStatus(e.target.value)}
         style={{ 
           width: "100%", 
-          padding: "15px 18px", 
-          marginBottom: "20px",
-          fontSize: "1.2rem",
-          border: "2px solid #ccc",
-          borderRadius: "8px",
+          padding: "18px 20px", 
+          marginBottom: "25px",
+          fontSize: "1.4rem",
+          border: "3px solid #ccc",
+          borderRadius: "10px",
           boxSizing: "border-box",
           backgroundColor: "#fff",
-          color: "#000"
+          color: "#000",
+          fontWeight: "600"
         }}
       >
-        <option value="faal">Faal</option>
-        <option value="cari_tamir">Cari Tamir</option>
-        <option value="gayri_faal">Gayri Faal</option>
+        <option value="faal">🟢 Faal</option>
+        <option value="cari_tamir">🟠 Cari Tamir</option>
+        <option value="gayri_faal">🔴 Gayri Faal</option>
       </select>
 
       <button 
         onClick={save} 
         style={{ 
-          padding: "18px 20px", 
+          padding: "20px", 
           width: "100%",
-          fontSize: "1.3rem",
+          fontSize: "1.5rem",
           fontWeight: "bold",
-          borderRadius: "8px",
+          borderRadius: "10px",
           backgroundColor: "#4CAF50",
           color: "white",
           border: "none",
-          cursor: "pointer"
+          cursor: "pointer",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
         }}
       >
-        Kaydet
+        ✅ Kaydet
       </button>
     </div>
   );
