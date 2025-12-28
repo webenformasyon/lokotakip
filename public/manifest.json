@@ -1,0 +1,41 @@
+{
+  "name": "Loko Takip - Lokomotif Yönetim Sistemi",
+  "short_name": "Loko Takip",
+  "description": "Lokomotif takip ve bakım yönetim sistemi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#242424",
+  "theme_color": "#FF6B35",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Yeni Lokomotif Ekle",
+      "short_name": "Yeni Loko",
+      "description": "Hızlıca yeni lokomotif ekle",
+      "url": "/?action=add",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
+

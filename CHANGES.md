@@ -33,3 +33,31 @@
 - **Toplam:** 4867 dosya git takibinden çıkarıldı
 - **Sonuç:** Repository boyutu önemli ölçüde küçültüldü
 
+### UI İyileştirmeleri
+- **Düzenlenen Dosya:** `src/AddLoco.jsx`
+- **Eklenen Özellik:** "← Geri" butonu eklendi
+- **Amaç:** Kullanıcıların yeni lokomotif ekleme sayfasından ana listeye kolayca dönebilmesi
+- **Test Edildi:** Dev server'da (localhost:5173) tam çalışır durumda
+
+### Responsive Tasarım ve PWA
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:**
+  - `src/index.css` - Body layout düzeltildi
+  - `src/App.css` - Responsive container eklendi
+  - `src/Home.jsx` - Mobil uyumlu, responsive kartlar ve tipografi (clamp kullanımı)
+  - `src/AddLoco.jsx` - Mobil uyumlu form, responsive inputlar
+  - `src/LocoDetail.jsx` - **prompt() kaldırıldı**, modern form UI eklendi, mobil uyumlu
+  - `src/App.jsx` - FAB (Floating Action Button) geliştirildi, hover efektleri
+  - `index.html` - PWA meta tags, theme-color, mobil viewport ayarları
+  - `public/manifest.json` - PWA manifest dosyası oluşturuldu
+
+### İşlem Ekleme Düzeltmesi  
+- **Sorun:** "Yeni İşlem Ekle" butonu `prompt()` kullandığı için mobilde çalışmıyordu
+- **Çözüm:** Modern form UI eklendi (input + textarea + Kaydet/İptal butonları)
+- **Özellikler:**
+  - Açık mavi arka plan ile vurgulu form
+  - İşlem başlığı ve açıklama alanları
+  - Kaydet (yeşil) ve İptal (kırmızı) butonları
+  - Form state yönetimi ile kontrol
+- **Sonuç:** Mobil ve desktop'ta sorunsuz çalışıyor
+
