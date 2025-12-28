@@ -22,15 +22,15 @@ export default function AddLoco({ onBack }) {
         onClick={onBack}
         style={{
           marginBottom: "20px",
-          padding: "10px 15px",
-          fontSize: "1rem"
+          padding: "12px 20px",
+          fontSize: "1.2rem"
         }}
       >
         ← Geri
       </button>
       
       <h2 style={{ 
-        fontSize: "clamp(1.5rem, 5vw, 2rem)",
+        fontSize: "1.8rem",
         marginBottom: "1.5rem"
       }}>
         Yeni Lokomotif
@@ -42,10 +42,10 @@ export default function AddLoco({ onBack }) {
         onChange={(e) => setName(e.target.value)}
         style={{ 
           width: "100%", 
-          padding: "12px 15px", 
+          padding: "15px 18px", 
           marginBottom: "15px",
-          fontSize: "1rem",
-          border: "1px solid #ccc",
+          fontSize: "1.2rem",
+          border: "2px solid #ccc",
           borderRadius: "8px",
           boxSizing: "border-box"
         }}
@@ -56,10 +56,10 @@ export default function AddLoco({ onBack }) {
         onChange={(e) => setStatus(e.target.value)}
         style={{ 
           width: "100%", 
-          padding: "12px 15px", 
+          padding: "15px 18px", 
           marginBottom: "20px",
-          fontSize: "1rem",
-          border: "1px solid #ccc",
+          fontSize: "1.2rem",
+          border: "2px solid #ccc",
           borderRadius: "8px",
           boxSizing: "border-box",
           backgroundColor: "#fff",
@@ -74,9 +74,9 @@ export default function AddLoco({ onBack }) {
       <button 
         onClick={save} 
         style={{ 
-          padding: "15px 20px", 
+          padding: "18px 20px", 
           width: "100%",
-          fontSize: "1.1rem",
+          fontSize: "1.3rem",
           fontWeight: "bold",
           borderRadius: "8px",
           backgroundColor: "#4CAF50",

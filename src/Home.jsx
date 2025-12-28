@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 
 export default function Home({ onSelect }) {
   const [locos, setLocos] = useState([]);
+  const [logsMap, setLogsMap] = useState({});
 
   async function loadLocos() {
     const { data, error } = await supabase
@@ -12,7 +13,26 @@ export default function Home({ onSelect }) {
       .eq("is_active", true)
       .order("name", { ascending: true });
 
-    if (!error) setLocos(data);
+    if (!error) {
+      setLocos(data);
+      // Her loko için işlemleri yükle
+      loadAllLogs(data);
+    }
+  }
+
+  async function loadAllLogs(locomotives) {
+    const logsData = {};
+    for (const loco of locomotives) {
+      const { data } = await supabase
+        .from("locomotive_logs")
+        .select("*")
+        .eq("loco_id", loco.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      
+      logsData[loco.id] = data || [];
+    }
+    setLogsMap(logsData);
   }
 
   useEffect(() => {
@@ -40,57 +60,219 @@ export default function Home({ onSelect }) {
     }
   }
 
+  function statusText(status) {
+    switch (status) {
+      case "faal": return "Faal";
+      case "cari_tamir": return "Cari Tamir";
+      case "gayri_faal": return "Gayri Faal";
+      default: return status;
+    }
+  }
+
+  async function changeStatus(locoId, newStatus) {
+    await supabase
+      .from("locomotives")
+      .update({ status: newStatus })
+      .eq("id", locoId);
+    
+    loadLocos();
+  }
+
+  function getTurkishDate() {
+    const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    const now = new Date();
+    const dayName = days[now.getDay()];
+    const day = now.getDate();
+    const month = months[now.getMonth()];
+    const year = now.getFullYear();
+    
+    return `${dayName}, ${day} ${month} ${year}`;
+  }
+
+  async function shareOnWhatsApp() {
+    let message = `🚂 *Lokomotif Durumu*\n`;
+    message += `📅 ${getTurkishDate()}\n`;
+    message += `━━━━━━━━━━━━━━━\n\n`;
+
+    for (const loco of locos) {
+      const logs = logsMap[loco.id] || [];
+      message += `🔹 *${loco.name}*\n`;
+      message += `   Durum: ${statusText(loco.status)}\n`;
+      
+      if (logs.length > 0) {
+        message += `   Son İşlem: ${logs[0].title}\n`;
+      } else {
+        message += `   İşlem kaydı yok\n`;
+      }
+      message += `\n`;
+    }
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  }
+
   return (
     <div style={{ 
-      padding: "20px",
-      maxWidth: "800px",
+      padding: "15px",
+      maxWidth: "100%",
       margin: "0 auto",
-      paddingBottom: "100px" // FAB için boşluk
+      paddingBottom: "100px"
     }}>
+      {/* Tarih Başlığı */}
+      <div style={{
+        backgroundColor: "#FF6B35",
+        color: "white",
+        padding: "15px",
+        borderRadius: "8px",
+        marginBottom: "20px",
+        textAlign: "center",
+        fontSize: "1.1rem",
+        fontWeight: "bold",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
+      }}>
+        📅 {getTurkishDate()}
+      </div>
+
       <h2 style={{ 
-        fontSize: "clamp(1.5rem, 5vw, 2rem)",
-        marginBottom: "1rem"
+        fontSize: "1.8rem",
+        marginBottom: "1.5rem",
+        textAlign: "center"
       }}>
         Lokomotifler
       </h2>
-      {locos.map((loco) => (
-        <div
-          key={loco.id}
-          onClick={() => onSelect(loco)}
-          style={{
-            border: "1px solid #ccc",
-            padding: "15px",
-            marginBottom: "10px",
-            cursor: "pointer",
-            borderLeft: `8px solid ${statusColor(loco.status)}`,
-            borderRadius: "8px",
-            transition: "all 0.2s",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateX(5px)";
-            e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateX(0)";
-            e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-          }}
-        >
-          <div style={{ 
-            fontSize: "clamp(1rem, 3vw, 1.2rem)",
-            fontWeight: "bold"
-          }}>
-            {loco.name}
+
+      {locos.map((loco) => {
+        const logs = logsMap[loco.id] || [];
+        return (
+          <div
+            key={loco.id}
+            style={{
+              border: "2px solid #ccc",
+              borderLeft: `8px solid ${statusColor(loco.status)}`,
+              borderRadius: "8px",
+              marginBottom: "15px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+              overflow: "hidden"
+            }}
+          >
+            {/* Lokomotif Bilgisi */}
+            <div 
+              style={{
+                padding: "15px",
+                backgroundColor: "#f9f9f9"
+              }}
+            >
+              {/* Loko Adı - Tıklanabilir */}
+              <div 
+                onClick={() => onSelect(loco)}
+                style={{ 
+                  fontSize: "1.4rem",
+                  fontWeight: "bold",
+                  marginBottom: "12px",
+                  color: "#000",
+                  cursor: "pointer"
+                }}
+              >
+                🚂 {loco.name}
+              </div>
+              
+              {/* Durum Seçici */}
+              <div style={{ 
+                display: "flex",
+                alignItems: "center",
+                gap: "10px"
+              }}>
+                <span style={{ 
+                  fontSize: "1rem",
+                  color: "#666",
+                  fontWeight: "500"
+                }}>
+                  Durum:
+                </span>
+                <select
+                  value={loco.status}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    changeStatus(loco.id, e.target.value);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    padding: "8px 12px",
+                    fontSize: "1rem",
+                    fontWeight: "bold",
+                    border: `2px solid ${statusColor(loco.status)}`,
+                    borderRadius: "6px",
+                    backgroundColor: "white",
+                    color: statusColor(loco.status),
+                    cursor: "pointer",
+                    minWidth: "150px"
+                  }}
+                >
+                  <option value="faal" style={{ color: "green" }}>🟢 Faal</option>
+                  <option value="cari_tamir" style={{ color: "orange" }}>🟠 Cari Tamir</option>
+                  <option value="gayri_faal" style={{ color: "red" }}>🔴 Gayri Faal</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Son İşlem */}
+            {logs.length > 0 && (
+              <div style={{
+                padding: "15px",
+                backgroundColor: "#fff",
+                borderTop: "1px solid #e0e0e0"
+              }}>
+                <div style={{ 
+                  fontSize: "1rem",
+                  fontWeight: "bold",
+                  marginBottom: "8px",
+                  color: "#666"
+                }}>
+                  Son İşlem:
+                </div>
+                <div style={{
+                  fontSize: "1.05rem",
+                  padding: "10px",
+                  backgroundColor: "#e3f2fd",
+                  borderRadius: "6px",
+                  borderLeft: "4px solid #2196F3",
+                  color: "#333"
+                }}>
+                  {logs[0].title}
+                </div>
+              </div>
+            )}
           </div>
-          <div style={{ 
-            fontSize: "clamp(0.85rem, 2.5vw, 0.95rem)",
-            marginTop: "5px",
-            opacity: 0.8
-          }}>
-            Durum: {loco.status.replace("_", " ")}
-          </div>
-        </div>
-      ))}
+        );
+      })}
+
+      {/* WhatsApp Paylaş Butonu */}
+      <button
+        onClick={shareOnWhatsApp}
+        style={{
+          width: "100%",
+          padding: "15px",
+          fontSize: "1.2rem",
+          fontWeight: "bold",
+          backgroundColor: "#25D366",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          cursor: "pointer",
+          marginTop: "20px",
+          marginBottom: "20px",
+          boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px"
+        }}
+      >
+        <span style={{ fontSize: "1.5rem" }}>📱</span>
+        WhatsApp'ta Paylaş
+      </button>
     </div>
   );
 }

@@ -61,3 +61,58 @@
   - Form state yönetimi ile kontrol
 - **Sonuç:** Mobil ve desktop'ta sorunsuz çalışıyor
 
+### Font Büyütme ve WhatsApp Paylaşım
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:**
+  - `src/Home.jsx` - Ana sayfa yeniden tasarlandı
+  - `src/AddLoco.jsx` - Font boyutları artırıldı (1.2rem+)
+  - `src/LocoDetail.jsx` - Font boyutları artırıldı (1.2rem+)
+
+**Yeni Özellikler:**
+1. **Türkçe Tarih Gösterimi**
+   - En üstte turuncu banner: "📅 Pazar, 28 Aralık 2025"
+   - Gün adı, ay adı ve yıl Türkçe olarak gösteriliyor
+
+2. **Büyük Yazı Tipleri**
+   - Tüm fontlar mobilde daha okunabilir (1.1rem - 1.8rem arası)
+   - Input ve butonlar daha büyük padding ile
+   - Border kalınlıkları artırıldı (2px)
+
+3. **İşlemler Görünümü**
+   - Her lokomotif kartında son 3 işlem gösteriliyor
+   - İşlemler mavi kenarlı kutularda
+   - Başlık ve açıklama ayrı satırlarda
+
+4. **WhatsApp Paylaşım Butonu**
+   - Yeşil buton (#25D366) tüm lokoları paylaşmak için
+   - Format: Lokomotif adı + Durum + İşlem listesi
+   - Türkçe tarih ile başlıyor
+   - WhatsApp'a direkt mesaj olarak gönderiyor
+
+### İşlem Sistemi Basitleştirme
+- **Tarih:** 28 Aralık 2025
+- **Güncellenen Dosyalar:**
+  - `src/Home.jsx` - Son 1 işlem gösterimi
+  - `src/LocoDetail.jsx` - Tek input form
+
+**Değişiklikler:**
+1. **İşlem Formu Basitleştirildi**
+   - Başlık + Açıklama → Sadece tek textarea
+   - Placeholder: "İşlem açıklaması (örn: Yağ değişimi yapıldı, frenler kontrol edildi)"
+   - Daha hızlı işlem girişi
+
+2. **İşlem Gösterimi**
+   - Her loko için son 1 işlem gösteriliyor (önceden 3)
+   - Sadece işlem metni (description kaldırıldı)
+   - Tarih Türkçe format: "28 Aralık 2025 15:07"
+
+3. **WhatsApp Paylaşım Formatı**
+   - Sadece son işlem paylaşılıyor
+   - Format: "Son İşlem: [işlem metni]"
+
+4. **Lokomotif Numarası - Font Rengi Düzeltmesi**
+   - **Sorun:** Beyaz font kullanıldığı için numaralar görünmüyordu
+   - **Çözüm:** Font rengi siyaha çevrildi (#000)
+   - Format: "🚂 [loko adı]"
+   - **Sonuç:** Artık loko numaraları hem mobilde hem desktop'ta net görünüyor
+
