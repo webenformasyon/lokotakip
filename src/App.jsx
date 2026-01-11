@@ -16,7 +16,7 @@ export default function App() {
         onClick={() => setScreen("add")}
         style={{
           position: "fixed",
-          bottom: "20px",
+          bottom: "80px",
           right: "20px",
           width: "60px",
           height: "60px",
@@ -33,7 +33,7 @@ export default function App() {
           alignItems: "center",
           justifyContent: "center",
           transition: "all 0.3s",
-          zIndex: 1000
+          zIndex: 4000
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "scale(1.1)";

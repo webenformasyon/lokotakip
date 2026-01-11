@@ -1,5 +1,267 @@
 # Değişiklik Geçmişi
 
+## 11 Ocak 2026
+
+### Kompakt Görünüm İyileştirmeleri
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Kompakt görünümde her zaman bir lokonun detayı açık kalıyor
+- İlk lokomotif varsayılan olarak seçiliyor
+- Toggle mantığı kaldırıldı - bir lokoya basınca her zaman o lokonun detayı açılıyor, kapanmıyor
+- Kapat butonu (X) kaldırıldı - her zaman bir detay açık olduğu için gerek yok
+- WhatsApp paylaş butonu kompakt görünümdeki detay modalının en altına taşındı
+- Ana sayfadaki WhatsApp paylaş butonu kompakt görünümde gizlendi (çift görünüm sorunu çözüldü)
+- Tek bir lokomotif için WhatsApp mesajı oluşturan `generateWhatsAppMessageForSingleLoco` fonksiyonu eklendi
+- Modal dışına tıklayınca kapanma özelliği kaldırıldı
+- Modal backdrop'ine `pointerEvents: "none"` eklendi, modal içeriğine `pointerEvents: "auto"` eklendi - böylece lokolara tıklanabiliyor
+- Seçili lokonun numarası siyah renkte ve kalın (font-weight: 700) gösteriliyor
+- Kompakt görünümdeki WhatsApp paylaş butonu artık önce popup gösteriyor, direkt WhatsApp'a gitmiyor
+- Kompakt görünümdeki WhatsApp paylaş butonu artık tüm lokolar için mesaj oluşturuyor (liste görünümündeki gibi)
+- WhatsApp popup'ı dikey olarak genişletildi - maxWidth: 90vw, maxHeight: 90vh, height: 90vh
+- Textarea flex: 1 ve minHeight: 60vh ile genişletildi - metni rahat görmek için
+- WhatsApp popup'ının z-index'i 5000'e yükseltildi - kompakt görünümdeki modal'ın (z-index: 3000) üstünde görünüyor
+- Kompakt görünümde detay modalının backdrop'i (opak arka plan) kaldırıldı - backgroundColor: "transparent" yapıldı
+- Kompakt görünümde lokolar gruplara ayrıldı ve dikey olarak gösteriliyor:
+  - 110 ile başlayanlar (bir grup)
+  - 24 ile başlayanlar (bir grup)
+  - 15 ile başlayanlar (bir grup)
+  - 22 ve 33 ile başlayanlar (aynı grupta)
+  - Her grup dikey olarak (flexDirection: "column") alt alta gösteriliyor
+  - Gruplar yatay olarak yan yana gösteriliyor
+- Kompakt görünümde detay modalı alta kaydırıldı - `alignItems: "flex-end"` ve `paddingBottom: "40px"` eklendi
+- Detay modalı artık ekranın altında görünüyor, dikey lokoların üstünde kalıyor
+- Loko ekleme butonu biraz yukarı taşındı (bottom: 20px -> 80px) ve z-index'i artırıldı (1000 -> 4000)
+- Ekleme butonu artık kompakt görünümdeki detay modalının üstünde görünüyor
+- Başlık düzeni değiştirildi:
+  - "X Lokomotif" başlığı butonların üstünde gösteriliyor
+  - İstatistik (F: X GF: X KB: X CT: X) başlığın sağında gösteriliyor
+  - Yenile butonu istatistiğin sağında gösteriliyor
+  - Butonlar başlığın altında, sol tarafta hizalanmış
+- Kompakt görünümde gruplar 3'erli sütunlara bölündü:
+  - Her grupta 3'ten fazla lokomotif varsa, ikinci 3 birinci 3'ün sağında yeni bir sütun olarak gösteriliyor
+  - Örnek: 5 lokomotif varsa, ilk 3 sol sütunda, son 2 sağ sütunda gösteriliyor
+- Özet görünümünde lokomotif numarasına tıklanınca durum değiştirme popup'ı eklendi:
+  - Lokomotif numarasına tıklanınca popup açılıyor/kapanıyor
+  - Popup içinde liste görünümündeki aynı kontroller var: Faal, Cari Tamir, Bakımda, Gayri Faal
+  - Faal ve Bakımda butonları alt popup'ları açıyor (bakımsız/bakılıyor/hazır ve KB1/KB2/KB3 veya S1/S2/S3)
+  - Popup lokomotif numarasının altında gösteriliyor
+  - Dışarı tıklanınca popup kapanıyor
+  - Herhangi bir durum butonuna tıklanınca popup otomatik kapanıyor (Faal, Cari Tamir, Bakımda, Gayri Faal)
+  - Notlara tıklanınca da popup otomatik kapanıyor
+- "Eski Kayıtlar" butonu düzeltildi:
+  - Buton içindeki eski state referansları (`setCompactView`, `setSummaryView`) kaldırıldı
+  - Artık buton düzgün çalışıyor ve eski kayıtları gösteriyor
+
+---
+
+### Tab View Görünüm Sistemi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Kompakt ve Özet butonları 3 butonlu tab view sistemine dönüştürüldü
+- 3 görünüm modu: Liste, Kompakt, Özet
+- Tab view mantığı: Sadece bir görünüm aktif olabilir
+- Seçim localStorage'a kaydediliyor, sayfa yenilendiğinde aynı görünüm korunuyor
+- Görünüm değiştiğinde "Eski Kayıtlar" otomatik kapanıyor
+- Butonlar yan yana, aktif olan vurgulanıyor
+- Geçişler daha mantıklı ve kullanıcı dostu
+
+---
+
+### "Marş Yapma" Butonu Eklendi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Not düzenleme popup'ına "Marş Yapma" butonu eklendi
+- Buton siyah renkte (#000000)
+- Notlarda "Marş Yapma" metni göründüğünde siyah renkte stilli görünüyor
+- Diğer özel metinlerle (Soğuk Sevk, KB Yaklaşıyor, Malzeme Bekler, Takip:) aynı şekilde çalışıyor
+
+---
+
+### Sıralama Düzenlemesi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Durumlara göre sıralama kaldırıldı (Faal -> Cari Tamir -> Bakımda -> Gayri Faal)
+- Artık sadece lokomotif numaralarına göre alfabetik sıralama yapılıyor
+- Durum değiştiğinde lokomotif pozisyonu değişmiyor, kayboluyor gibi görünmüyor
+- Türkçe karakter desteği ile doğru sıralama yapılıyor
+
+---
+
+### 110 Serisi Lokomotifler için Özel Bakım Tipleri
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Lokomotif numarası 110 ile başlayan lokomotifler için bakım tipleri S1, S2, S3 olarak gösteriliyor
+- Diğer lokomotifler için KB1, KB2, KB3 gösterilmeye devam ediyor
+- KB popup'ında lokomotif numarasına göre dinamik olarak seçenekler gösteriliyor
+- Veritabanına 110 serisi için s1, s2, s3 olarak kaydediliyor
+- Tüm görüntüleme yerlerinde (butonlar, WhatsApp, liste) doğru format gösteriliyor
+- `is110Series()` ve `formatKbType()` yardımcı fonksiyonları eklendi
+- changeStatus fonksiyonunda hata kontrolü eklendi (console.error ile hatalar görülebilir)
+- KB popup butonlarında async/await kullanıldı, güncelleme tamamlanana kadar bekleniyor
+- **ÖNEMLİ:** Veritabanı constraint'i güncellenmeli - `database.md` dosyasına SQL komutları eklendi
+- Mevcut veritabanında `kb_type` constraint'ini güncellemek için SQL komutlarını çalıştırın
+
+---
+
+### UI Düzenlemeleri - Tarih, Başlık ve İstatistikler
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- En üstteki tarih başlığı kaldırıldı (boşuna yer kaplıyordu)
+- Durum istatistikleri (F: X GF: X KB: X CT: X) lokomotif sayısının altına taşındı
+- Eski Kayıtlar butonu Özet butonunun sağına taşındı (en sağda)
+- Butonlar tek bir satırda hizalandı: Yenile - Kompakt - Özet - Eski Kayıtlar
+- Başlık daha kompakt ve düzenli hale geldi
+- Kompakt ve Özet butonları birbirleriyle geçiş yapıyor (birine basınca diğeri kapanıyor)
+- Kompakt veya Özet butonuna basıldığında Eski Kayıtlar görünümü kapanıyor
+- Eski Kayıtlar butonuna basıldığında Kompakt ve Özet görünümleri kapanıyor
+
+---
+
+### WhatsApp Paylaşım iOS PWA Düzeltmesi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- iOS PWA içinde WhatsApp paylaşımı sonrası uygulamaya geri dönüş sorunu düzeltildi
+- iOS PWA tespit edildiğinde `window.location.href` kullanılıyor (window.open yerine)
+- Android ve normal tarayıcılarda `window.open` kullanılmaya devam ediliyor
+- iOS'ta WhatsApp'tan geri dönüldüğünde uygulama açık kalıyor
+
+---
+
+### WhatsApp Paylaşım Formatı Güncellendi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- WhatsApp mesajında durum bilgisi lokomotif numarasının sağ tarafına yazılıyor (aynı satırda)
+- Format: `🔹 *Loko Adı* - Durum` şeklinde
+- Boş satırlar temizleniyor (3 veya daha fazla ardışık boş satır 2'ye indiriliyor)
+- Mesaj daha kompakt ve okunabilir hale geldi
+
+---
+
+### Silme İşlemi Güncellendi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Lokomotif silme işlemi artık `is_active: false` yapmak yerine direkt veritabanından siliyor
+- `delete()` metodu kullanılıyor, `update()` yerine
+- Silinen lokomotifler veritabanından tamamen kaldırılıyor
+
+---
+
+### is_active ve gone Alanları Düzeltildi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/AddLoco.jsx`
+
+**Değişiklikler:**
+- Yeni lokomotif eklenirken `is_active: true` ve `gone: false` değerleri açıkça set ediliyor
+- Önceden bu alanlar set edilmiyordu, veritabanı default değerlerine bağlıydı
+- Artık yeni lokomotifler her zaman aktif ve depodan gitmemiş olarak ekleniyor
+
+---
+
+### Eski Kayıtlar Özelliği Eklendi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Kompakt ve Özet butonlarının altına "📜 Eski Kayıtlar" linki eklendi
+- Linke basıldığında depodan gitmiş lokolar (gone: true) gösteriliyor
+- Eski kayıtlar özet formatında gösteriliyor (lokomotif numarası solda, notlar sağda)
+- Her lokomotif için en son güncelleme tarihi gösteriliyor
+- Tarih formatı: "Gün, Ay Gün Yıl Saat:Dakika" (Türkçe)
+- Eski kayıtlar bölümü bordo renkli border ile vurgulanıyor
+- Notlardaki özel metinler (Soğuk Sevk, KB Yaklaşıyor, vb.) stilli görünüyor
+- Eski kayıtlar gösterildiğinde normal liste ve kompakt görünüm gizleniyor
+
+---
+
+## 11 Ocak 2026
+
+### Özet Görünüm Özelliği Eklendi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Kompakt butonunun sağına "📄 Özet" butonu eklendi
+- Özet görünüm aktif olduğunda liste görünümünde sadece lokomotif numarası ve açıklama (notlar) gösteriliyor
+- Özet görünümünde lokomotif numarası solda, notlar sağda yan yana gösteriliyor
+- Durum değiştirme butonları (Faal, Cari Tamir, Bakımda, Gayri Faal) gizleniyor
+- Sil ve Depodan Gitmiş butonları gizleniyor
+- Özet görünümü sadece liste görünümünde çalışıyor, kompakt görünümde etkisi yok
+- Yenile butonunda sadece 🔄 ikonu gösteriliyor (yazı kaldırıldı)
+- Yenile butonunun arka plan rengi kaldırıldı, sadece ikon görünüyor (şeffaf arka plan)
+- Hover efekti: ikon büyüyor ve turuncu renge dönüşüyor
+- Özet görünümünde dikey boşluklar azaltıldı (daha kompakt, daha çok lokomotif görünüyor)
+- Özet görünümünde notlara tıklanarak düzenleme yapılabiliyor
+- Notlar hover efekti ile vurgulanıyor
+- KB ve Faal popup'larının z-index'i artırıldı (4000), lokomotif detay modal'ının üstünde görünüyorlar
+- Kompakt görünümde lokomotif detay modal'ındaki kapat (✕) butonunun z-index'i artırıldı, sil butonunun üstünde görünüyor
+- Özet görünümünde notlara tıklandığında modal kapanmıyor, not düzenleme popup'ı açılıyor
+- Notlar kaydedildikten sonra modal açık kalıyor ve güncellenmiş notlar görünüyor
+- Not düzenleme popup'ının z-index'i artırıldı (4000), lokomotif detay modal'ının üstünde görünüyor
+- Notlardaki özel metinler (Soğuk Sevk, KB Yaklaşıyor, Malzeme Bekler, Takip:) butonlardaki gibi renkli ve stilli görünüyor
+- Özel metinler not içinde göründüğünde butonlardaki renk ve stil ile vurgulanıyor
+- "Takip:" butonu eklendi (bordo renk: #800020)
+- "Takip:" metni için pulse animasyonu eklendi (daha fark edilir: büyük scale değişimi, glow efekti, daha hızlı animasyon, kalın font)
+
+---
+
+### Kompakt Görünümde Lokomotif Detay Modal Eklendi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Kompakt görünümde lokomotife tıklandığında detay modal'ı açılıyor
+- Modal içinde liste görünümündeki gibi tüm lokomotif bilgileri gösteriliyor
+- Durum değiştirme butonları, notlar ve silme butonları modal içinde çalışıyor
+- Modal sağ üst köşedeki ✕ butonu ile kapatılabiliyor
+- Modal dışına tıklandığında da kapanıyor
+
+---
+
+### Lokomotif Sıralaması Güncellendi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Lokomotifler durumlarına göre sıralanıyor
+- Sıralama önceliği: Faal → Cari Tamir → Bakımda → Gayri Faal
+- Aynı durumda olan lokomotifler isme göre alfabetik sıralanıyor
+- Türkçe karakter desteği ile doğru sıralama yapılıyor
+
+---
+
+### Yenile Butonu Eklendi
+- **Tarih:** 11 Ocak 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Başlık satırında, kompakt butonunun soluna yenile butonu eklendi
+- Buton her zaman görünür (hem liste hem kompakt görünümde)
+- 🔄 ikonu ve "Yenile" yazısı ile görsel olarak belirgin
+- Hover efekti ile kullanıcı etkileşimi iyileştirildi
+- PC kullanıcıları için pull-to-refresh yerine buton ile yenileme imkanı sağlandı
+- Buton kompakt butonunun hemen solunda konumlandırıldı
+- Butona basınca sadece veriler yenileniyor (sayfa yenilenmeden, hızlı ve akıcı)
+
+---
+
 ## 28 Aralık 2025
 
 ### Faal Alt Durumları Güncellendi

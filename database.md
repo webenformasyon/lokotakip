@@ -10,7 +10,7 @@ create table locomotives (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   status text not null check (status in ('faal', 'cari_tamir', 'bakimda', 'gayri_faal')),
-  kb_type text check (kb_type in ('kb1', 'kb2', 'kb3')),
+  kb_type text check (kb_type in ('kb1', 'kb2', 'kb3', 's1', 's2', 's3')),
   faal_sub_status text check (faal_sub_status in ('bakimsiz', 'bakiliyor', 'hazir')),
   notes text default '',
   is_active boolean not null default true,
@@ -63,3 +63,8 @@ create trigger update_locomotives_timestamp
 before update on locomotives
 for each row
 execute procedure update_timestamp();
+
+-- MEVCUT VERİTABANI İÇİN: kb_type constraint'ini güncelle (s1, s2, s3 ekle)
+-- Eğer tablo zaten varsa, bu komutları çalıştır:
+ALTER TABLE locomotives DROP CONSTRAINT IF EXISTS locomotives_kb_type_check;
+ALTER TABLE locomotives ADD CONSTRAINT locomotives_kb_type_check CHECK (kb_type IN ('kb1', 'kb2', 'kb3', 's1', 's2', 's3'));

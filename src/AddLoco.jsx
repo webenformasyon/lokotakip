@@ -13,7 +13,9 @@ export default function AddLoco({ onBack }) {
       name, 
       status,
       kb_type: status === "bakimda" ? kbType : null,
-      faal_sub_status: status === "faal" ? faalSubStatus : null
+      faal_sub_status: status === "faal" ? faalSubStatus : null,
+      is_active: true,
+      gone: false
     };
     await supabase.from("locomotives").insert(data);
     onBack();
