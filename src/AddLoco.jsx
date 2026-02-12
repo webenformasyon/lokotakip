@@ -1,5 +1,5 @@
 // src/AddLoco.jsx
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "./supabase";
 
 export default function AddLoco({ onBack }) {
@@ -7,10 +7,44 @@ export default function AddLoco({ onBack }) {
   const [status, setStatus] = useState("faal");
   const [kbType, setKbType] = useState("kb1");
   const [faalSubStatus, setFaalSubStatus] = useState("bakimsiz");
+  // 'show' = görünür, 'fade' = kayboluyor, null = yok
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const duplicateTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (duplicateTimeoutRef.current) clearTimeout(duplicateTimeoutRef.current);
+    };
+  }, []);
 
   async function save() {
-    const data = { 
-      name, 
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
+    // Aynı isimde aktif loko var mı kontrol et
+    const { data: existing } = await supabase
+      .from("locomotives")
+      .select("id")
+      .eq("is_active", true)
+      .eq("gone", false)
+      .ilike("name", trimmedName)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      if (duplicateTimeoutRef.current) clearTimeout(duplicateTimeoutRef.current);
+      setDuplicateWarning("show");
+      duplicateTimeoutRef.current = setTimeout(() => {
+        setDuplicateWarning("fade");
+        duplicateTimeoutRef.current = setTimeout(() => {
+          setDuplicateWarning(null);
+          duplicateTimeoutRef.current = null;
+        }, 500);
+      }, 2000);
+      return;
+    }
+
+    const data = {
+      name: trimmedName,
       status,
       kb_type: status === "bakimda" ? kbType : null,
       faal_sub_status: status === "faal" ? faalSubStatus : null,
@@ -47,6 +81,26 @@ export default function AddLoco({ onBack }) {
       }}>
         Yeni Lokomotif
       </h2>
+
+      {duplicateWarning && (
+        <div
+          role="alert"
+          style={{
+            padding: "14px 20px",
+            marginBottom: "18px",
+            borderRadius: "10px",
+            backgroundColor: "#fff3cd",
+            color: "#856404",
+            border: "1px solid #ffc107",
+            fontSize: "1.1rem",
+            fontWeight: "600",
+            transition: "opacity 0.5s ease-out",
+            opacity: duplicateWarning === "fade" ? 0 : 1
+          }}
+        >
+          Bu lokomotif zaten listede var.
+        </div>
+      )}
 
       <input
         placeholder="Loko adı (örn: 24100)"

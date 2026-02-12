@@ -961,6 +961,50 @@ export default function Home() {
                     dangerouslySetInnerHTML={{ __html: loco.notes && loco.notes.trim() ? formatNotesWithStyles(loco.notes) : "-" }}
                   >
                   </div>
+                  <div style={{ display: "flex", gap: "4px", flexShrink: 0, alignItems: "center" }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOzetStatusPopup(null);
+                        setActionSheetLoco({ ...loco, action: 'gone' });
+                      }}
+                      title="Depodan Gitmiş"
+                      style={{
+                        padding: "4px 6px",
+                        fontSize: "1rem",
+                        lineHeight: 1,
+                        backgroundColor: "#FF9800",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      🚂
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOzetStatusPopup(null);
+                        setActionSheetLoco({ ...loco, action: 'delete' });
+                      }}
+                      title="Sil"
+                      style={{
+                        padding: "4px 6px",
+                        fontSize: "1rem",
+                        lineHeight: 1,
+                        backgroundColor: "#f44336",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div style={{ 
@@ -1891,8 +1935,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Kompakt Görünüm Lokomotif Detay Modal */}
-      {viewMode === 'kompakt' && selectedLocoDetail && (
+      {/* Kompakt Görünüm Lokomotif Detay Modal - Eski kayıtlar açıkken gizle */}
+      {viewMode === 'kompakt' && !showOldRecords && selectedLocoDetail && (
         <div
           style={{
             position: "fixed",

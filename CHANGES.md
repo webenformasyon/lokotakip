@@ -1,5 +1,39 @@
 # Değişiklik Geçmişi
 
+## 13 Şubat 2026
+
+### Özet görünümüne Depodan Gitmiş ve Sil ikonları
+- **Tarih:** 13 Şubat 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Özet görünümünde her satırın en sağına iki kompakt ikon eklendi: turuncu 🚂 (Depodan Gitmiş), kırmızı ✕ (Sil). Aynı action sheet onay akışı kullanılıyor, yer kaplamıyor.
+
+---
+
+### Kompakt görünümden Eski Kayıtlara geçişte detay panelinin gizlenmesi
+- **Tarih:** 13 Şubat 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Kompakt görünümdeyken "Eski Kayıtlar" açıldığında alttaki lokomotif detay paneli artık kaybolmuyordu; koşula `!showOldRecords` eklendi.
+- Eski kayıtlar açıkken kompakt detay modal'ı render edilmiyor; eski kayıtlar kapatılınca detay tekrar görünüyor.
+
+---
+
+### Yeni loko eklerken "Zaten var" uyarısı
+- **Tarih:** 13 Şubat 2026
+- **Güncellenen Dosya:** `src/AddLoco.jsx`
+
+**Değişiklikler:**
+- Listede aynı isimde (aktif, depodan gitmemiş) lokomotif varken Kaydet'e basıldığında ekleme yapılmıyor.
+- Sarı uyarı kutusunda "Bu lokomotif zaten listede var." mesajı gösteriliyor.
+- Uyarı yaklaşık 2 saniye görünür kalıyor, ardından 0,5 saniyede opacity ile yavaşça kayboluyor.
+- İsim karşılaştırması büyük/küçük harf duyarsız (ilike) ve baştaki/sondaki boşluklar trim edilerek yapılıyor.
+- Unmount sırasında timeout temizleniyor (bellek sızıntısı önleme).
+
+---
+
 ## 11 Ocak 2026
 
 ### Kompakt Görünüm İyileştirmeleri
