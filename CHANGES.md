@@ -1,5 +1,17 @@
 # Değişiklik Geçmişi
 
+## 16 Eylül 2026
+
+### Arka plandan dönüşte otomatik yenileme
+- **Tarih:** 16 Eylül 2026
+- **Güncellenen Dosya:** `src/Home.jsx`
+
+**Değişiklikler:**
+- Telefon/PWA'da uygulama arka planda kalıp tekrar açıldığında sağ üstteki 🔄 yenileme ile aynı `loadLocos` çağrısı tetikleniyor (`visibilitychange`, `pageshow`, `focus`).
+- Eski kayıtlar açıksa onlar da yeniden çekiliyor; kompakt görünümdeki seçili lokomotif güncel veriye güncelleniyor.
+
+---
+
 ## 13 Şubat 2026
 
 ### Özet görünümüne Depodan Gitmiş ve Sil ikonları

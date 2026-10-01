@@ -1,5 +1,5 @@
 // src/Home.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "./supabase";
 
 export default function Home() {
@@ -20,6 +20,7 @@ export default function Home() {
   const [showOldRecords, setShowOldRecords] = useState(false); // Eski kayıtlar toggle
   const [oldLocos, setOldLocos] = useState([]); // Depodan gitmiş lokolar
   const [ozetStatusPopup, setOzetStatusPopup] = useState(null); // Özet görünümünde durum popup'ı için lokomotif ID
+  const showOldRecordsRef = useRef(showOldRecords);
 
   async function loadLocos() {
     const { data, error } = await supabase
@@ -36,8 +37,23 @@ export default function Home() {
       });
       
       setLocos(sortedData);
+      setSelectedLocoDetail((prev) => {
+        if (!prev) return prev;
+        return sortedData.find((l) => l.id === prev.id) || prev;
+      });
     }
   }
+
+  function refreshFromServer() {
+    loadLocos();
+    if (showOldRecordsRef.current) {
+      loadOldLocos();
+    }
+  }
+
+  useEffect(() => {
+    showOldRecordsRef.current = showOldRecords;
+  }, [showOldRecords]);
 
   useEffect(() => {
     loadLocos();
@@ -53,6 +69,30 @@ export default function Home() {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
+  }, []);
+
+  // Telefon/PWA: uygulama arka plandan dönünce yenile butonuyla aynı veriyi çek
+  useEffect(() => {
+    function onResume() {
+      if (document.visibilityState !== "visible") return;
+      refreshFromServer();
+    }
+
+    function onPageShow(event) {
+      if (event.persisted) {
+        onResume();
+      }
+    }
+
+    document.addEventListener("visibilitychange", onResume);
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("focus", onResume);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onResume);
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("focus", onResume);
+    };
   }, []);
 
   // viewMode değiştiğinde localStorage'a kaydet
@@ -402,7 +442,7 @@ export default function Home() {
             </div>
             {/* Yenile Butonu - İstatistiğin sağında */}
             <button
-              onClick={loadLocos}
+              onClick={refreshFromServer}
               style={{
                 padding: "8px",
                 fontSize: "1.3rem",
