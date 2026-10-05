@@ -84,3 +84,38 @@
   display: inline-block;
   animation: refresh-spin 0.8s linear infinite;
 }
+
+.home-view-controls {
+  width: 100%;
+  min-width: 0;
+}
+
+.home-view-mode-group {
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .home-view-controls {
+    flex-wrap: wrap;
+    align-items: stretch !important;
+    gap: 6px !important;
+  }
+
+  .home-view-mode-group {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .home-view-mode-button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 7px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .home-view-archive-tab {
+    flex: 1 1 calc(50% - 3px);
+    min-width: 0;
+    padding: 8px 10px !important;
+  }
+}

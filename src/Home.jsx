@@ -943,14 +943,15 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div style={{
+        <div className="home-view-controls" style={{
           display: "flex",
           alignItems: "center",
           gap: "10px",
           justifyContent: "flex-start"
         }}>
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className="home-view-mode-group" style={{ display: "flex", gap: "8px" }}>
             <button
+              className="home-view-mode-button"
               onClick={() => {
                 setViewMode('liste');
                 setShowOldRecords(false);
@@ -974,6 +975,7 @@ export default function Home() {
               📋 Liste
             </button>
             <button
+              className="home-view-mode-button"
               onClick={() => {
                 setViewMode('kompakt');
                 setShowOldRecords(false);
@@ -997,6 +999,7 @@ export default function Home() {
               🔢 Kompakt
             </button>
             <button
+              className="home-view-mode-button"
               onClick={() => {
                 setViewMode('ozet');
                 setShowOldRecords(false);
@@ -1021,6 +1024,7 @@ export default function Home() {
             </button>
           </div>
           <button
+            className="home-view-archive-tab"
             onClick={() => {
               const nextShowOldRecords = !showOldRecords;
               setShowOldRecords(nextShowOldRecords);
@@ -1045,6 +1049,7 @@ export default function Home() {
             📜 Tarihçe
           </button>
           <button
+            className="home-view-archive-tab"
             onClick={() => {
               const nextShowTrainLog = !showTrainLog;
               setShowTrainLog(nextShowTrainLog);
