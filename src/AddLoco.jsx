@@ -161,6 +161,7 @@ export default function AddLoco({ onBack }) {
           <option value="bakimsiz">Bakımsız</option>
           <option value="bakiliyor">Bakılıyor</option>
           <option value="hazir">Hazır</option>
+          <option value="yolda">Yolda</option>
         </select>
       )}
 
