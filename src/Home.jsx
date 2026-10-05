@@ -41,6 +41,7 @@ export default function Home() {
   const [trainLogError, setTrainLogError] = useState("");
   const [ozetStatusPopup, setOzetStatusPopup] = useState(null); // Özet görünümünde durum popup'ı için lokomotif ID
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastLocoUpdateAt, setLastLocoUpdateAt] = useState(null);
   const showOldRecordsRef = useRef(showOldRecords);
   const showTrainLogRef = useRef(showTrainLog);
   const editNotesTextareaRef = useRef(null);
@@ -92,7 +93,19 @@ export default function Home() {
     }
   }
 
+  async function loadLastLocoUpdate() {
+    const { data, error } = await supabase
+      .from("locomotives")
+      .select("updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error) setLastLocoUpdateAt(data?.updated_at || null);
+  }
+
   function refreshFromServer() {
+    loadLastLocoUpdate();
     if (showOldRecordsRef.current) {
       loadOldNotes();
     } else if (showTrainLogRef.current) {
@@ -108,6 +121,7 @@ export default function Home() {
     setIsRefreshing(true);
     try {
       await Promise.all([
+        loadLastLocoUpdate(),
         showOldRecordsRef.current
           ? loadOldNotes()
           : showTrainLogRef.current
@@ -129,6 +143,7 @@ export default function Home() {
 
   useEffect(() => {
     loadLocos();
+    loadLastLocoUpdate();
 
     // Realtime — biri ekleyince / güncelleyince herkese düşsün
     const channel = supabase
@@ -136,7 +151,10 @@ export default function Home() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "locomotives" },
-        () => loadLocos()
+        () => {
+          loadLocos();
+          loadLastLocoUpdate();
+        }
       )
       .subscribe();
 
@@ -609,6 +627,18 @@ export default function Home() {
     return `${dayName} ${day}.${month}.${year} ${hours}:${minutes}`;
   }
 
+  function formatLastLocoUpdate(timestamp) {
+    if (!timestamp) return "Güncelleme yok";
+
+    const date = new Date(timestamp);
+    const months = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+    const days = ["Paz", "P.tesi", "Sal", "Çar", "Per", "Cum", "Cmt"];
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${date.getDate()} ${months[date.getMonth()]} ${days[date.getDay()]} ${hours}:${minutes}`;
+  }
+
   async function saveNotes() {
     const trimmedText = editNotesText.trim();
 
@@ -871,41 +901,46 @@ export default function Home() {
               {getStatusStats()}
             </div>}
             {/* Yenile Butonu - İstatistiğin sağında */}
-            <button
-              onClick={refreshManually}
-              disabled={isRefreshing}
-              aria-label={isRefreshing ? "Yenileniyor" : "Yenile"}
-              style={{
-                width: "40px",
-                height: "40px",
-                padding: 0,
-                fontSize: "1.2rem",
-                backgroundColor: isRefreshing ? "#1976d2" : "#2196F3",
-                color: "white",
-                border: "none",
-                borderRadius: "50%",
-                cursor: isRefreshing ? "wait" : "pointer",
-                transition: "all 0.2s",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                opacity: isRefreshing ? 0.8 : 1
-              }}
-              onMouseEnter={(e) => {
-                if (!isRefreshing) {
-                  e.currentTarget.style.transform = "scale(1.08)";
-                  e.currentTarget.style.backgroundColor = "#1976d2";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.backgroundColor = isRefreshing ? "#1976d2" : "#2196F3";
-              }}
-              title={isRefreshing ? "Yenileniyor..." : "Yenile"}
-            >
-              <span className={isRefreshing ? "refresh-spinner" : ""}>🔄</span>
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px" }}>
+              <button
+                onClick={refreshManually}
+                disabled={isRefreshing}
+                aria-label={isRefreshing ? "Yenileniyor" : "Yenile"}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  padding: 0,
+                  fontSize: "1.2rem",
+                  backgroundColor: isRefreshing ? "#1976d2" : "#2196F3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  cursor: isRefreshing ? "wait" : "pointer",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  opacity: isRefreshing ? 0.8 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!isRefreshing) {
+                    e.currentTarget.style.transform = "scale(1.08)";
+                    e.currentTarget.style.backgroundColor = "#1976d2";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.backgroundColor = isRefreshing ? "#1976d2" : "#2196F3";
+                }}
+                title={isRefreshing ? "Yenileniyor..." : "Yenile"}
+              >
+                <span className={isRefreshing ? "refresh-spinner" : ""}>🔄</span>
+              </button>
+              <span style={{ fontSize: "0.62rem", color: "#666", whiteSpace: "nowrap", lineHeight: 1.2 }}>
+                {formatLastLocoUpdate(lastLocoUpdateAt)}
+              </span>
+            </div>
           </div>
         </div>
         <div style={{
